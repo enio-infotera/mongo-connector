@@ -1,22 +1,22 @@
-package com.despegar.integration.mongo.connector.impl;
+package com.despegar.integration.mongo.query.builder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.util.Assert;
 
-import com.despegar.integration.mongo.connector.HandlerAggregationQuery;
-import com.despegar.integration.mongo.connector.HandlerAggregationQuery.Aggregation;
-import com.despegar.integration.mongo.connector.HandlerAggregationQuery.AggregationOperation;
-import com.despegar.integration.mongo.connector.HandlerAggregationQuery.GeometryAggregationSpecifier;
+import com.despegar.integration.mongo.query.AggregationQuery;
+import com.despegar.integration.mongo.query.AggregationQuery.Aggregation;
+import com.despegar.integration.mongo.query.AggregationQuery.AggregationOperation;
+import com.despegar.integration.mongo.query.AggregationQuery.GeometryAggregationSpecifier;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
-public class MongoHandlerAggregationQuery {
+public class MongoAggregationQuery {
 
-    private final HandlerAggregationQuery handlerAggregationQuery;
+    private final AggregationQuery handlerAggregationQuery;
 
-    public MongoHandlerAggregationQuery(final HandlerAggregationQuery query) {
+    public MongoAggregationQuery(final AggregationQuery query) {
         this.handlerAggregationQuery = query;
     }
 
@@ -41,7 +41,7 @@ public class MongoHandlerAggregationQuery {
             AggregationOperation.GEO_NEAR.equals(aggregation.getAggregationOperation())
                 && aggregation.getGeometrySpecifiers() == null, "Specifiers for geometry operations are required.");
 
-        MongoHandlerQuery mongoHandlerQuery = new MongoHandlerQuery(aggregation.getQuery());
+        MongoQuery mongoHandlerQuery = new MongoQuery(aggregation.getQuery());
 
         if (aggregation.getGeometrySpecifiers() != null) {
             DBObject geometrySpecifiers = this.getGeometrySpecifiers(aggregation.getGeometrySpecifiers());

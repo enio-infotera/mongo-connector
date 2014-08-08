@@ -1,4 +1,4 @@
-package com.despegar.integration.mongo.support;
+package com.despegar.integration.mongo.connector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -9,9 +9,9 @@ import java.util.Set;
 import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.domain.api.GenericIdentificableEntity;
-import com.despegar.integration.mongo.connector.Page;
 import com.despegar.integration.mongo.id.IdGenerator;
-import com.despegar.integration.mongo.id.StringIdGenerator;
+import com.despegar.integration.mongo.query.QueryPage;
+import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +29,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 
 @SuppressWarnings("rawtypes")
-public class MongoDao<T extends GenericIdentificableEntity> {
+class MongoDao<T extends GenericIdentificableEntity> {
 
     private DB mongoDb;
     private Class<T> clazz;
@@ -37,12 +37,7 @@ public class MongoDao<T extends GenericIdentificableEntity> {
     private IdGenerator idGenerator;
     private ObjectMapper mapper;
 
-    @Deprecated
-    public MongoDao(DB mongoDb, String collection, Class<T> clazz) throws UnknownHostException {
-        this(mongoDb, collection, new ObjectMapper(), clazz, new StringIdGenerator());
-    }
-
-    public MongoDao(DB mongoDb, String collection, ObjectMapper mapper, Class<T> clazz, IdGenerator idGenerator)
+    MongoDao(DB mongoDb, String collection, ObjectMapper mapper, Class<T> clazz, IdGenerator idGenerator)
         throws UnknownHostException {
         this.mongoDb = mongoDb;
         this.clazz = clazz;
@@ -65,14 +60,14 @@ public class MongoDao<T extends GenericIdentificableEntity> {
     }
 
     public T findOne(DBObject query) {
-        return this.findOne(query, new BasicDBObject(), new Page(0, 1));
+        return this.findOne(query, new BasicDBObject(), new QueryPage(0, 1));
     }
 
     public T findOne(DBObject query, ReadPreference readPreference) {
-        return this.findOne(query, new BasicDBObject(), new Page(0, 1), readPreference);
+        return this.findOne(query, new BasicDBObject(), new QueryPage(0, 1), readPreference);
     }
 
-    public T findOne(DBObject query, DBObject sortInfo, Page page) {
+    public T findOne(DBObject query, DBObject sortInfo, QueryPage page) {
         List<T> list = this.find(query, new BasicDBObject(), sortInfo, page);
         if (list != null && !list.isEmpty()) {
             return list.get(0);
@@ -80,7 +75,7 @@ public class MongoDao<T extends GenericIdentificableEntity> {
         return null;
     }
 
-    public T findOne(DBObject query, DBObject sortInfo, Page page, ReadPreference readPreference) {
+    public T findOne(DBObject query, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
         List<T> list = this.find(query, new BasicDBObject(), sortInfo, page, readPreference);
         if (list != null && !list.isEmpty()) {
             return list.get(0);
@@ -127,27 +122,27 @@ public class MongoDao<T extends GenericIdentificableEntity> {
         return this.find(query, fields, sortInfo, null, readPreference);
     }
 
-    public List<T> findUsingPage(DBObject query, DBObject fields, Page page) {
+    public List<T> findUsingPage(DBObject query, DBObject fields, QueryPage page) {
         return this.find(query, fields, null, page);
     }
 
-    public List<T> findUsingPage(DBObject query, DBObject fields, Page page, ReadPreference readPreference) {
+    public List<T> findUsingPage(DBObject query, DBObject fields, QueryPage page, ReadPreference readPreference) {
         return this.find(query, fields, null, page, readPreference);
     }
 
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, Page page) {
+    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page) {
         return this.find(query, fields, sortInfo, page, null, this.coll.getReadPreference());
     }
 
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, Page page, ReadPreference readPreference) {
+    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
         return this.find(query, fields, sortInfo, page, null, readPreference);
     }
 
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, Page page, MutableInt count) {
+    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, MutableInt count) {
         return this.find(query, fields, sortInfo, page, count, this.coll.getReadPreference());
     }
 
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, Page page, MutableInt count,
+    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, MutableInt count,
         ReadPreference readPreference) {
         DBCursor cursor = this.coll.find(query, fields);
 

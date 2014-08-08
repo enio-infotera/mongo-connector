@@ -1,4 +1,4 @@
-package com.despegar.integration.mongo.connector;
+package com.despegar.integration.mongo.query;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +10,7 @@ import org.apache.commons.collections.OrderedMap;
 import org.apache.commons.collections.map.ListOrderedMap;
 import org.springframework.util.Assert;
 
-public class HandlerQuery {
+public class Query {
 
     public static enum OrderDirection {
         ASC, DESC
@@ -28,10 +28,6 @@ public class HandlerQuery {
         GREATER, GREATER_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL, EXISTS
     }
 
-    public static enum UpdateOperation {
-        SET, UNSET, INC, RENAME, ADD_TO_SET, POP, PULL_ALL, PULL, PUSH
-    }
-
     public static enum GeometryOperation {
         WITH_IN, INTERSECTS, NEAR, NEAR_SPHERE
     }
@@ -46,15 +42,15 @@ public class HandlerQuery {
     private Map<String, OperationWithMathFunction> mathOperators = new HashMap<String, OperationWithMathFunction>();
     private Map<String, Object> filters = new HashMap<String, Object>();
     private OrderedMap orderFields = new ListOrderedMap();
-    private UpdateOperation updateOperation = null;
     private Boolean crucialDataIntegration = Boolean.FALSE;
 
-    private List<HandlerQuery> ors = new ArrayList<HandlerQuery>();
-    private List<HandlerQuery> andOrs = new ArrayList<HandlerQuery>();
+    private List<Query> ors = new ArrayList<Query>();
+    private List<Query> andOrs = new ArrayList<Query>();
 
-    private Page page;
+    private Integer limit = 10;
+    private Integer skip = 0;
 
-    public HandlerQuery() {
+    public Query() {
     }
 
     /**
@@ -63,7 +59,7 @@ public class HandlerQuery {
      * @param value
      * @return
      */
-    public HandlerQuery put(String key, Object value) {
+    public Query put(String key, Object value) {
 
         if (key != null) {
             this.getFilters().put(key, value);
@@ -77,7 +73,7 @@ public class HandlerQuery {
      * @param filters
      * @return
      */
-    public HandlerQuery putAll(Map<String, Object> filters) {
+    public Query putAll(Map<String, Object> filters) {
 
         this.getFilters().putAll(filters);
 
@@ -91,11 +87,11 @@ public class HandlerQuery {
      * @param values
      * @return
      */
-    public HandlerQuery put(String key, RangeOperation operator, Collection<?> values) {
+    public Query put(String key, RangeOperation operator, Collection<?> values) {
         return this.put(key, operator, values, false);
     }
 
-    public HandlerQuery put(String key, RangeOperation operator, Collection<?> values, boolean negation) {
+    public Query put(String key, RangeOperation operator, Collection<?> values, boolean negation) {
         if (values == null) {
             return this;
         } else if (values.size() == 1 && !negation) {
@@ -118,11 +114,11 @@ public class HandlerQuery {
      * @param value
      * @return
      */
-    public HandlerQuery put(String key, ComparisonOperation operator, Object value) {
+    public Query put(String key, ComparisonOperation operator, Object value) {
         return this.put(key, operator, value, false);
     }
 
-    public HandlerQuery put(String key, ComparisonOperation operator, Object value, boolean negation) {
+    public Query put(String key, ComparisonOperation operator, Object value, boolean negation) {
         OperationWithComparison operationWithComparison = this.getComparisonOperators().get(key);
 
         if (operationWithComparison != null) {
@@ -140,11 +136,11 @@ public class HandlerQuery {
      * @param value
      * @return
      */
-    public HandlerQuery put(String key, MathOperation operator, Object value) {
+    public Query put(String key, MathOperation operator, Object value) {
         return this.put(key, operator, value, false);
     }
 
-    public HandlerQuery put(String key, MathOperation operator, Object value, boolean negation) {
+    public Query put(String key, MathOperation operator, Object value, boolean negation) {
         this.getMathOperators().put(key, new OperationWithMathFunction(operator, value, negation));
         return this;
     }
@@ -156,11 +152,11 @@ public class HandlerQuery {
      * @param value
      * @return
      */
-    public HandlerQuery put(String key, GeometryOperation operator, Map<GeometrySpecifiers, Object> value) {
+    public Query put(String key, GeometryOperation operator, Map<GeometrySpecifiers, Object> value) {
         return this.put(key, operator, value, false);
     }
 
-    public HandlerQuery put(String key, GeometryOperation operator, Map<GeometrySpecifiers, Object> value, boolean negation) {
+    public Query put(String key, GeometryOperation operator, Map<GeometrySpecifiers, Object> value, boolean negation) {
         this.getGeospatialOperators().put(key, new OperationWithGeospatialFunction(operator, value, negation));
         return this;
     }
@@ -168,13 +164,13 @@ public class HandlerQuery {
     /**
      * Add a field for sorting purpose, with a default direction (asc)
      */
-    public HandlerQuery addOrderCriteria(String fieldName) {
+    public Query addOrderCriteria(String fieldName) {
         return this.addOrderCriteria(fieldName, OrderDirection.ASC);
 
     }
 
     @SuppressWarnings("unchecked")
-    public HandlerQuery addOrderCriteria(String fieldName, OrderDirection direction) {
+    public Query addOrderCriteria(String fieldName, OrderDirection direction) {
         Assert.notNull(fieldName, "Field name for sorting criteria is required.");
         if (direction == null) {
             return this.addOrderCriteria(fieldName);
@@ -198,10 +194,6 @@ public class HandlerQuery {
         return this.rangeOperators;
     }
 
-    public UpdateOperation getUpdateOperation() {
-        return this.updateOperation;
-    }
-
     public Map<String, OperationWithMathFunction> getMathOperators() {
         if (this.mathOperators == null) {
             this.mathOperators = new HashMap<String, OperationWithMathFunction>();
@@ -209,38 +201,26 @@ public class HandlerQuery {
         return this.mathOperators;
     }
 
-    public void setUpdateOperation(UpdateOperation updateOperation) {
-        this.updateOperation = updateOperation;
-    }
-
-    public void setPage(Page page) {
-        this.page = page;
-    }
-
-    public Page getPage() {
-        return this.page;
-    }
-
     public Map<String, OperationWithComparison> getComparisonOperators() {
         if (this.comparisonOperators == null) {
-            this.comparisonOperators = new HashMap<String, HandlerQuery.OperationWithComparison>();
+            this.comparisonOperators = new HashMap<String, Query.OperationWithComparison>();
         }
         return this.comparisonOperators;
     }
 
     public Map<String, OperationWithGeospatialFunction> getGeospatialOperators() {
         if (this.geospatialOperators == null) {
-            this.geospatialOperators = new HashMap<String, HandlerQuery.OperationWithGeospatialFunction>();
+            this.geospatialOperators = new HashMap<String, Query.OperationWithGeospatialFunction>();
         }
         return this.geospatialOperators;
     }
 
-    public HandlerQuery or(HandlerQuery anotherQuery) {
+    public Query or(Query anotherQuery) {
         this.ors.add(anotherQuery);
         return this;
     }
 
-    public List<HandlerQuery> getOrs() {
+    public List<Query> getOrs() {
         return this.ors;
     }
 
@@ -252,13 +232,29 @@ public class HandlerQuery {
         this.crucialDataIntegration = crucialDataOperation;
     }
 
-    public HandlerQuery andOr(Collection<HandlerQuery> orQueries) {
+    public Query andOr(Collection<Query> orQueries) {
         this.andOrs.addAll(orQueries);
         return this;
     }
 
-    public List<HandlerQuery> getAndOrs() {
+    public List<Query> getAndOrs() {
         return this.andOrs;
+    }
+
+    public Integer getLimit() {
+        return this.limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+
+    public Integer getSkip() {
+        return this.skip;
+    }
+
+    public void setSkip(Integer skip) {
+        this.skip = skip;
     }
 
     public static class OperationWithComparison {
@@ -266,7 +262,7 @@ public class HandlerQuery {
         private Object value;
         private boolean negation;
 
-        private List<OperationWithComparison> moreComparisions = new ArrayList<HandlerQuery.OperationWithComparison>();
+        private List<OperationWithComparison> moreComparisions = new ArrayList<Query.OperationWithComparison>();
 
         public OperationWithComparison(ComparisonOperation operation, Object value, boolean negation) {
             super();

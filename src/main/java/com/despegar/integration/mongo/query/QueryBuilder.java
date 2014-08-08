@@ -1,4 +1,4 @@
-package com.despegar.integration.mongo.connector;
+package com.despegar.integration.mongo.query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.despegar.integration.mongo.connector.HandlerQuery.OrderDirection;
+import com.despegar.integration.mongo.query.Query.OrderDirection;
 
 
-public class HandlerQueryBuilder {
+public class QueryBuilder {
 
     public static final String DEFAULT_OPERATOR_ORDER_COLUMN = "sort";
     public static final String DEFAULT_OPERATOR_ORDER_DIR = "order";
@@ -22,6 +22,9 @@ public class HandlerQueryBuilder {
     public static final String DEFAULT_OPERATOR_OR = "|";
 
 
+    private QueryBuilder() {
+    }
+
     /**
      * Builds a HandlerQuery from a query string parameters map.
      * For example, this query string:
@@ -31,9 +34,9 @@ public class HandlerQueryBuilder {
      * @param queryStringMap Query string parameters.
      * @return
      */
-    public static HandlerQuery buildFromQueryStringMap(Map<String, String> queryStringMap) {
+    public static Query buildFromQueryStringMap(Map<String, String> queryStringMap) {
 
-        HandlerQuery handlerQuery = new HandlerQuery();
+        Query handlerQuery = new Query();
         String orderField = null;
         OrderDirection orderDirection = null;
         Map<String, Object> orFields = new HashMap<String, Object>();
@@ -58,9 +61,9 @@ public class HandlerQueryBuilder {
                     } else {
                         // Add field
                         if (isOr(value)) {
-                            List<HandlerQuery> sameFieldOrQueries = new ArrayList<HandlerQuery>();
+                            List<Query> sameFieldOrQueries = new ArrayList<Query>();
                             for (String splittedOrValue : value.split(Pattern.quote(DEFAULT_OPERATOR_OR))) {
-                                HandlerQuery sameFieldOrQuery = new HandlerQuery();
+                                Query sameFieldOrQuery = new Query();
                                 sameFieldOrQuery.put(key, isLike(splittedOrValue) ? evaluateLikes(splittedOrValue)
                                     : splittedOrValue);
                                 sameFieldOrQueries.add(sameFieldOrQuery);
@@ -90,9 +93,9 @@ public class HandlerQueryBuilder {
         handlerQuery.putAll(fields);
 
         // Perform the logical OR in the HandlerQuery
-        List<HandlerQuery> handlerQueriesOrs = new ArrayList<HandlerQuery>();
+        List<Query> handlerQueriesOrs = new ArrayList<Query>();
         for (String orField : orFields.keySet()) {
-            HandlerQuery handlerQueryOr = new HandlerQuery();
+            Query handlerQueryOr = new Query();
             handlerQueryOr.put(orField, orFields.get(orField));
             handlerQueriesOrs.add(handlerQueryOr);
         }

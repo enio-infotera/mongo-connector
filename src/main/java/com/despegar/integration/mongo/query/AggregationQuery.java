@@ -1,11 +1,11 @@
-package com.despegar.integration.mongo.connector;
+package com.despegar.integration.mongo.query;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.despegar.integration.mongo.entities.Point;
 
-public class HandlerAggregationQuery {
+public class AggregationQuery {
 
     public static enum AggregationOperation {
         GEO_NEAR, MATCH, GROUP
@@ -15,7 +15,7 @@ public class HandlerAggregationQuery {
         NEAR, DISTANCE_FIELD, LIMIT, NUM, MAX_DISTANCE, SPHERICAL, DISTANCE_MULTIPLIER, INCLUDE_LOCS, UNIQUE_DOCS
     }
 
-    private List<Aggregation> aggregations = new ArrayList<HandlerAggregationQuery.Aggregation>();
+    private List<Aggregation> aggregations = new ArrayList<AggregationQuery.Aggregation>();
 
     public void addAggregation(Aggregation aggregation) {
         this.aggregations.add(aggregation);
@@ -28,10 +28,10 @@ public class HandlerAggregationQuery {
     public static class Aggregation {
         private AggregationOperation aggregationOperation;
         private GeometryAggregationSpecifier geometrySpecifiers;
-        private HandlerQuery query;
+        private Query query;
 
         public Aggregation(AggregationOperation aggregationOperation, GeometryAggregationSpecifier geometrySpecifiers,
-            HandlerQuery query) {
+            Query query) {
             super();
             this.aggregationOperation = aggregationOperation;
             this.geometrySpecifiers = geometrySpecifiers;
@@ -46,7 +46,7 @@ public class HandlerAggregationQuery {
             return this.geometrySpecifiers;
         }
 
-        public HandlerQuery getQuery() {
+        public Query getQuery() {
             return this.query;
         }
     }
