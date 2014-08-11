@@ -7,24 +7,28 @@
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
 		http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
 
-	<bean id="com.despegar.integration.mongo.mongoDBConnection" class="com.despegar.integration.mongo.support.MongoDBConnection"
-		p:replicaSet="${com.despegar.integration.mongo.replicaSet}"
-		p:dbName="${com.despegar.integration.mongo.dbName}" />
-
-	<alias alias="objectMapper.alias"
-		name="${com.despegar.integration.mongo.objectMapper:com.despegar.integration.mongo.default.objectMapper}" />
-
-	<bean id="com.despegar.integration.mongo.factory" class="com.despegar.integration.mongo.support.MongoDaoFactory"
-		p:mongoDBConnection-ref="com.despegar.integration.mongo.mongoDBConnection" p:mapper-ref="objectMapper.alias" />
-
-	<bean id="com.despegar.integration.mongo.default.objectMapper"
-		class="com.fasterxml.jackson.databind.ObjectMapper" />
+	<bean id="com.despegar.integration.mongo.mongoDBConnection" class="com.despegar.integration.mongo.connector.MongoDBConnection">
+		<constructor-arg value="${com.despegar.integration.mongo.dbName}" />
+		<constructor-arg value="${com.despegar.integration.mongo.replicaSet}" />
+	</bean>		
+	
+	<bean id="com.despegar.integration.mongo.collection.factory" class="com.despegar.integration.mongo.connector.MongoCollectionFactory"
+		p:mapper-ref="objectMapper.alias"
+		p:idGenerator-ref="idGenerator.alias">
+		<constructor-arg ref="com.despegar.integration.mongo.mongoDBConnection" />
+	</bean>
 		
-	<bean id="com.despegar.integration.mongo.id.generator.long"
-		class="com.despegar.integration.mongo.id.LongIdGenerator"
-		p:mongoDBConnection-ref="com.despegar.integration.mongo.mongoDBConnection"
-		p:counterCollectionName="${com.despegar.integration.mongo.counters:counters}"/>
-			
-	<bean id="com.despegar.integration.mongo.id.generator.string"
-		class="com.despegar.integration.mongo.id.StringIdGenerator" />
+	<alias alias="objectMapper.alias"
+	name="${com.despegar.integration.mongo.objectMapper:com.despegar.integration.mongo.objectMapper}" />
+	
+	<bean id="com.despegar.integration.mongo.objectMapper"
+	class="com.fasterxml.jackson.databind.ObjectMapper" />
+	
+	<alias alias="idGenerator.alias"
+	name="${com.despegar.integration.mongo.idGenerator:com.despegar.integration.mongo.generator.string}"/>
+	
+	<bean id="com.despegar.integration.mongo.generator.string"
+	class="com.despegar.integration.mongo.id.StringIdGenerator" />
+	
+
 </beans>

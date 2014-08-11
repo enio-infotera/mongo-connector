@@ -126,6 +126,11 @@ public class MongoCollection<T extends GenericIdentificableEntity> {
         return this.mongoDao.distinct(key);
     }
 
+    public List<?> distinct(String key, Query query) {
+        MongoQuery q = new MongoQuery(query);
+        return this.mongoDao.distinct(key, q.getQuery());
+    }
+
     private ReadPreference isCrucialDataIntegration(Query query) {
         if (query.isCrucialDataIntegration()) {
             return ReadPreference.primary();

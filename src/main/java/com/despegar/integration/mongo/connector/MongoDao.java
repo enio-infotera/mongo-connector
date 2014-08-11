@@ -181,6 +181,10 @@ class MongoDao<T extends GenericIdentificableEntity> {
         return this.coll.distinct(key);
     }
 
+    public List<?> distinct(String key, DBObject query) {
+        return this.coll.distinct(key, query);
+    }
+
     public <X extends Object> X insert(T value) {
         return this.insert(value, WriteConcern.NORMAL);
     }

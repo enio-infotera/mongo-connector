@@ -13,9 +13,14 @@ public class QueryPage
     private int limit;
 
     public QueryPage(Integer offset, Integer limit) {
-        Assert.notNull(offset, "Offset can't be null!");
+        if (offset == null) {
+            offset = 0;
+        }
         Assert.isTrue(offset >= 0, "Offset must be equals or greater than 0");
-        Assert.notNull(limit, "Page number can't be null!");
+
+        if (limit == null) {
+            limit = 30;
+        }
         Assert.isTrue(limit >= 0, "Limit must be equals or greater than 0");
 
         this.offset = offset;

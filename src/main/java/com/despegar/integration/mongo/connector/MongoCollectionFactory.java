@@ -9,22 +9,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class MongoCollectionFactory {
 
-    private MongoCollectionFactory() {
+    public MongoCollectionFactory(MongoDBConnection mongoDBConnection) {
+        this.mongoDBConnection = mongoDBConnection;
     }
 
-    public static <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
-        Class<T> clazz, MongoDBConnection mongoDBConnection) throws UnknownHostException {
-        return buildMongoCollection(collection, clazz, mongoDBConnection, new StringIdGenerator(), new ObjectMapper());
-    }
+    private IdGenerator<?> idGenerator = new StringIdGenerator();
+    private ObjectMapper mapper = new ObjectMapper();
+    private MongoDBConnection mongoDBConnection;
 
-    public static <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
-        Class<T> clazz, MongoDBConnection mongoDBConnection, IdGenerator<?> idGenerator) throws UnknownHostException {
-        return buildMongoCollection(collection, clazz, mongoDBConnection, idGenerator, new ObjectMapper());
-    }
-
-    public static <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
-        Class<T> clazz, MongoDBConnection mongoDBConnection, ObjectMapper mapper) throws UnknownHostException {
-        return buildMongoCollection(collection, clazz, mongoDBConnection, new StringIdGenerator(), mapper);
+    public <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
+        Class<T> clazz) throws UnknownHostException {
+        return MongoCollectionFactory.buildMongoCollection(collection, clazz, this.mongoDBConnection, this.idGenerator,
+            this.mapper);
     }
 
     public static <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
@@ -32,6 +28,14 @@ public class MongoCollectionFactory {
         throws UnknownHostException {
         MongoDao<T> mongoDao = new MongoDao<T>(mongoDBConnection.getDB(), collection, mapper, clazz, idGenerator);
         return new MongoCollection<T>(collection, clazz, mongoDao);
+    }
+
+    public void setIdGenerator(IdGenerator<?> idGenerator) {
+        this.idGenerator = idGenerator;
+    }
+
+    public void setMapper(ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 
 }
