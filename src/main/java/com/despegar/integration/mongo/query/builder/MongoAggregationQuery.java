@@ -2,14 +2,19 @@ package com.despegar.integration.mongo.query.builder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.despegar.integration.mongo.query.AggregateQuery;
 import com.despegar.integration.mongo.query.AggregateQuery.Aggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.AggregateOperation;
 import com.despegar.integration.mongo.query.AggregateQuery.GeoNearAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.GroupAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.MatchAggregate;
 import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.aggregation.GeometrySpecifierQuery;
+import com.despegar.integration.mongo.query.aggregation.GroupQuery;
+import com.despegar.integration.mongo.query.aggregation.GroupQuery.GroupOperation;
+import com.despegar.integration.mongo.query.aggregation.GroupQuery.OperationWithFunction;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -44,8 +49,42 @@ public class MongoAggregationQuery {
         case MATCH:
             aggregationOperation = "$match";
             break;
+        case GROUP:
+            aggregationOperation = "$group";
+            break;
         }
         return aggregationOperation;
+    }
+
+    private String getGroupOperation(final GroupOperation operation) {
+        String groupOperation = null;
+        switch (operation) {
+        case SUM:
+            groupOperation = "$sum";
+            break;
+        case AVG:
+            groupOperation = "$avg";
+            break;
+        case MIN:
+            groupOperation = "$min";
+            break;
+        case MAX:
+            groupOperation = "$max";
+            break;
+        case PUSH:
+            groupOperation = "$push";
+            break;
+        case LAST:
+            groupOperation = "$last";
+            break;
+        case FIRST:
+            groupOperation = "$first";
+            break;
+        case ADD_TO_SET:
+            groupOperation = "$addToSet";
+            break;
+        }
+        return groupOperation;
     }
 
     private DBObject getAggregationQuery(final Aggregate aggregation) {
@@ -54,9 +93,30 @@ public class MongoAggregationQuery {
             return this.getGeometrySpecifiers(((GeoNearAggregate) aggregation).getGeometrySpecifier());
         case MATCH:
             return this.getMatchQuery(((MatchAggregate) aggregation).getQuery());
+        case GROUP:
+            return this.getGroupQuery(((GroupAggregate) aggregation).getGroup());
         }
 
         return null;
+    }
+
+    private DBObject getGroupQuery(GroupQuery group) {
+        DBObject specifierProperties = new BasicDBObject();
+        for (Map.Entry<String, OperationWithFunction> entry : group.getOperators().entrySet()) {
+            final String key = entry.getKey();
+            final OperationWithFunction operationWithfunction = entry.getValue();
+            final String groupOperation = this.getGroupOperation(operationWithfunction.getGroupOperation());
+
+            DBObject function = new BasicDBObject(groupOperation, operationWithfunction.getValue());
+            specifierProperties.put(key, function);
+        }
+
+        DBObject id = new BasicDBObject();
+        for (Map.Entry<String, String> entry : group.getId().entrySet()) {
+            id.put(entry.getKey(), entry.getValue());
+        }
+        specifierProperties.put("_id", id);
+        return specifierProperties;
     }
 
     private DBObject getMatchQuery(Query query) {

@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.despegar.integration.mongo.query.aggregation.GeometrySpecifierQuery;
+import com.despegar.integration.mongo.query.aggregation.GroupQuery;
 
 public class AggregateQuery {
 
     public static enum AggregateOperation {
-        MATCH, GEO_NEAR;
+        MATCH, GEO_NEAR, GROUP;
     }
 
     List<Aggregate> piplines = new ArrayList<Aggregate>();
@@ -30,6 +31,14 @@ public class AggregateQuery {
             return this;
         }
         this.piplines.add(new GeoNearAggregate(geoSpecifier));
+        return this;
+    }
+
+    public AggregateQuery addGroup(GroupQuery groupQuery) {
+        if (groupQuery == null) {
+            return this;
+        }
+        this.piplines.add(new GroupAggregate(groupQuery));
         return this;
     }
 
@@ -67,6 +76,25 @@ public class AggregateQuery {
 
         public GeometrySpecifierQuery getGeometrySpecifier() {
             return this.geometrySpecifier;
+        }
+
+        public AggregateOperation getAggregationOperation() {
+            return this.aggregationOperation;
+        }
+    }
+
+    public static class GroupAggregate
+        implements Aggregate {
+
+        private AggregateOperation aggregationOperation = AggregateOperation.GROUP;
+        private GroupQuery group;
+
+        public GroupAggregate(GroupQuery group) {
+            this.group = group;
+        }
+
+        public GroupQuery getGroup() {
+            return this.group;
         }
 
         public AggregateOperation getAggregationOperation() {
