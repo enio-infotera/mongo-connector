@@ -2,7 +2,7 @@ package com.despegar.integration.mongo.connector;
 
 import java.net.UnknownHostException;
 
-import com.despegar.integration.domain.api.GenericIdentificableEntity;
+import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.id.StringIdGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;

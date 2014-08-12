@@ -77,7 +77,12 @@ public class MongoQuery {
                 key = MONGO_ID_FIELD;
             }
 
-            dbQuery.append(key, value);
+            if (value.getClass().isEnum()) {
+                dbQuery.append(key, value.toString());
+            } else {
+                dbQuery.append(key, value);
+            }
+
         }
 
         this.appendRangeOperations(query, dbQuery);

@@ -8,14 +8,14 @@ import java.util.Set;
 
 import org.apache.commons.lang.mutable.MutableInt;
 
-import com.despegar.integration.domain.api.GenericIdentificableEntity;
+import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.query.QueryPage;
 import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.mongodb.AggregationOptions;
 import com.mongodb.AggregationOutput;
 import com.mongodb.BasicDBObject;
@@ -46,7 +46,7 @@ class MongoDao<T extends GenericIdentificableEntity> {
 
         this.mapper.setPropertyNamingStrategy(new IdWithUnderscoreStrategy());
         this.mapper.setSerializationInclusion(Include.NON_NULL);
-        this.mapper.registerModule(new AfterburnerModule());
+        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         this.coll = this.mongoDb.getCollection(collection);
     }

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang.mutable.MutableInt;
 
-import com.despegar.integration.domain.api.GenericIdentificableEntity;
+import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.query.AggregationQuery;
 import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.Update;
@@ -13,8 +13,7 @@ import com.despegar.integration.mongo.query.builder.MongoQuery;
 import com.despegar.integration.mongo.query.builder.MongoUpdate;
 import com.mongodb.ReadPreference;
 
-@SuppressWarnings("rawtypes")
-public class MongoCollection<T extends GenericIdentificableEntity> {
+public class MongoCollection<T extends GenericIdentificableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;
@@ -78,7 +77,6 @@ public class MongoCollection<T extends GenericIdentificableEntity> {
         return this.mongoDao.getTotalObjectsInCollection(this.collectionName, mongoQuery.getQuery());
     }
 
-    @SuppressWarnings("unchecked")
     public <X extends Object> X add(final T t) {
         t.setId(null);
         return this.mongoDao.insert(t);

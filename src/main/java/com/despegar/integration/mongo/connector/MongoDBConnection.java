@@ -1,9 +1,9 @@
 package com.despegar.integration.mongo.connector;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
@@ -37,7 +37,7 @@ public class MongoDBConnection {
         }
 
         String[] addresses = this.replicaSet.split(",");
-        List<ServerAddress> serverAddresses = Lists.newArrayList();
+        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
         ServerAddress serverAddress;
         for (String address : addresses) {
             String[] split = address.split(":");

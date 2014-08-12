@@ -276,7 +276,7 @@ public class Query {
         }
 
         public Object getValue() {
-            return this.value;
+            return this.value.getClass().isEnum() ? this.value.toString() : this.value;
         }
 
         public OperationWithComparison addComparision(OperationWithComparison another) {
@@ -310,7 +310,19 @@ public class Query {
         }
 
         public Collection<?> getValues() {
-            return this.values;
+            if (!this.values.isEmpty()) {
+                Collection<Object> values = new ArrayList<Object>();
+                for (Object obj : this.values) {
+                    if (obj.getClass().isEnum()) {
+                        values.add(obj.toString());
+                    } else {
+                        values.add(obj);
+                    }
+                }
+                return this.values;
+            } else {
+                return this.values;
+            }
         }
 
         public boolean isNegation() {
