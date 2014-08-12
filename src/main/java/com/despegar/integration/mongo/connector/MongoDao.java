@@ -11,6 +11,8 @@ import org.apache.commons.lang.mutable.MutableInt;
 import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.query.QueryPage;
+import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.AggregationOptions;
@@ -40,6 +42,9 @@ class MongoDao<T extends GenericIdentificableEntity> {
         this.clazz = clazz;
         this.idGenerator = idGenerator;
         this.mapper = mapper;
+
+        this.mapper.setPropertyNamingStrategy(new IdWithUnderscoreStrategy());
+        this.mapper.setSerializationInclusion(Include.NON_NULL);
 
         this.coll = this.mongoDb.getCollection(collection);
     }
