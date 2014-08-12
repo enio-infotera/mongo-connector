@@ -72,6 +72,9 @@ public class MongoQuery {
 
             final Object pureValue = query.getFilters().get(key);
             final Object value = pureValue;
+            if (value == null) {
+                continue;
+            }
 
             if (ID_FIELD.equals(key)) {
                 key = MONGO_ID_FIELD;

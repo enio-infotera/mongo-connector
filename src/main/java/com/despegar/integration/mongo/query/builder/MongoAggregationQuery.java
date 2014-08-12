@@ -3,70 +3,39 @@ package com.despegar.integration.mongo.query.builder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.util.Assert;
-
-import com.despegar.integration.mongo.query.AggregationQuery;
-import com.despegar.integration.mongo.query.AggregationQuery.Aggregation;
-import com.despegar.integration.mongo.query.AggregationQuery.AggregationOperation;
-import com.despegar.integration.mongo.query.AggregationQuery.GeometryAggregationSpecifier;
+import com.despegar.integration.mongo.query.AggregateQuery;
+import com.despegar.integration.mongo.query.AggregateQuery.Aggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.AggregateOperation;
+import com.despegar.integration.mongo.query.AggregateQuery.GeoNearAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.MatchAggregate;
+import com.despegar.integration.mongo.query.Query;
+import com.despegar.integration.mongo.query.aggregation.GeometrySpecifierQuery;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 public class MongoAggregationQuery {
 
-    private final AggregationQuery handlerAggregationQuery;
+    private final AggregateQuery handlerAggregationQuery;
 
-    public MongoAggregationQuery(final AggregationQuery query) {
+    public MongoAggregationQuery(final AggregateQuery query) {
         this.handlerAggregationQuery = query;
     }
 
     public List<DBObject> getQuery() {
         List<DBObject> res = new ArrayList<DBObject>();
-        List<Aggregation> aggregationList = this.handlerAggregationQuery.getAggregations();
-        for (Aggregation aggregation : aggregationList) {
-            res.add(this.appendAggregationOperations(aggregation));
+        for (Aggregate aggregation : this.handlerAggregationQuery.getPiplines()) {
+            String key = this.getAggregationOperation(aggregation.getAggregationOperation());
+            Object query = this.getAggregationQuery(aggregation);
+            if (query == null) {
+                continue;
+            }
+
+            res.add(new BasicDBObject(key, query));
         }
         return res;
     }
 
-    private DBObject appendAggregationOperations(Aggregation aggregation) {
-        DBObject dbQuery = new BasicDBObject();
-        String key = this.getAggregationOperation(aggregation.getAggregationOperation());
-        dbQuery.put(key, this.getAggregationQuery(aggregation));
-        return dbQuery;
-    }
-
-    private DBObject getAggregationQuery(Aggregation aggregation) {
-        Assert.notNull(
-            AggregationOperation.GEO_NEAR.equals(aggregation.getAggregationOperation())
-                && aggregation.getGeometrySpecifiers() == null, "Specifiers for geometry operations are required.");
-
-        MongoQuery mongoHandlerQuery = new MongoQuery(aggregation.getQuery());
-
-        if (aggregation.getGeometrySpecifiers() != null) {
-            DBObject geometrySpecifiers = this.getGeometrySpecifiers(aggregation.getGeometrySpecifiers());
-            geometrySpecifiers.put("query", mongoHandlerQuery.getQuery());
-            return geometrySpecifiers;
-        } else {
-            return mongoHandlerQuery.getQuery();
-        }
-    }
-
-    private DBObject getGeometrySpecifiers(GeometryAggregationSpecifier geometrySpecifiers) {
-        DBObject specifierProperties = new BasicDBObject();
-        specifierProperties.put("near", geometrySpecifiers.getNear());
-        specifierProperties.put("distanceField", geometrySpecifiers.getDistanceField());
-        specifierProperties.put("limit", geometrySpecifiers.getLimit());
-        specifierProperties.put("num", geometrySpecifiers.getNum());
-        specifierProperties.put("maxDistance", geometrySpecifiers.getMaxDistance());
-        specifierProperties.put("spherical", geometrySpecifiers.isSpherical());
-        specifierProperties.put("distanceMultiplier", geometrySpecifiers.getDistanceMultiplier());
-        specifierProperties.put("includeLocs", geometrySpecifiers.getIncludeLocs());
-        specifierProperties.put("uniqueDocs", geometrySpecifiers.isUniqueDocs());
-        return specifierProperties;
-    }
-
-    private String getAggregationOperation(final AggregationOperation operation) {
+    private String getAggregationOperation(final AggregateOperation operation) {
         String aggregationOperation = null;
         switch (operation) {
         case GEO_NEAR:
@@ -75,11 +44,45 @@ public class MongoAggregationQuery {
         case MATCH:
             aggregationOperation = "$match";
             break;
-        case GROUP:
-            aggregationOperation = "$group";
-            break;
         }
         return aggregationOperation;
     }
+
+    private DBObject getAggregationQuery(final Aggregate aggregation) {
+        switch (aggregation.getAggregationOperation()) {
+        case GEO_NEAR:
+            return this.getGeometrySpecifiers(((GeoNearAggregate) aggregation).getGeometrySpecifier());
+        case MATCH:
+            return this.getMatchQuery(((MatchAggregate) aggregation).getQuery());
+        }
+
+        return null;
+    }
+
+    private DBObject getMatchQuery(Query query) {
+        MongoQuery mongoQuery = new MongoQuery(query);
+        return mongoQuery.getQuery();
+    }
+
+    private DBObject getGeometrySpecifiers(GeometrySpecifierQuery geometrySpecifiers) {
+        DBObject specifierProperties = new BasicDBObject();
+        this.putIfNotNull(geometrySpecifiers.getNear(), "near", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.getDistanceField(), "distanceField", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.getLimit(), "limit", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.getNum(), "num", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.getMaxDistance(), "maxDistance", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.isSpherical(), "spherical", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.getDistanceMultiplier(), "distanceMultiplier", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.getIncludeLocs(), "includeLocs", specifierProperties);
+        this.putIfNotNull(geometrySpecifiers.isUniqueDocs(), "uniqueDocs", specifierProperties);
+        return specifierProperties;
+    }
+
+    private void putIfNotNull(Object value, String property, DBObject specifierProperites) {
+        if (value != null) {
+            specifierProperites.put(property, value);
+        }
+    }
+
 
 }

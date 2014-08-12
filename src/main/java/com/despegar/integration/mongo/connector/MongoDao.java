@@ -11,9 +11,6 @@ import org.apache.commons.lang.mutable.MutableInt;
 import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.query.QueryPage;
-import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.AggregationOptions;
@@ -43,10 +40,6 @@ class MongoDao<T extends GenericIdentificableEntity> {
         this.clazz = clazz;
         this.idGenerator = idGenerator;
         this.mapper = mapper;
-
-        this.mapper.setPropertyNamingStrategy(new IdWithUnderscoreStrategy());
-        this.mapper.setSerializationInclusion(Include.NON_NULL);
-        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         this.coll = this.mongoDb.getCollection(collection);
     }
@@ -305,24 +298,15 @@ class MongoDao<T extends GenericIdentificableEntity> {
     }
 
     public <X extends Object> List<X> aggregate(List<DBObject> pipeline, Class<X> resultClazz) {
-        AggregationOutput aggregationOutput = this.coll.aggregate(pipeline);
-        Iterable<DBObject> results = aggregationOutput.results();
-        Iterator<DBObject> iterator = results.iterator();
-        List<X> ret = new ArrayList<X>();
-        while (iterator.hasNext()) {
-            ret.add(this.serialize(iterator.next(), resultClazz));
-        }
-        return ret;
+        return this.aggregate(pipeline, this.coll.getReadPreference(), resultClazz);
+    }
+
+    public List<T> aggregate(List<DBObject> pipeline) {
+        return this.aggregate(pipeline, this.coll.getReadPreference(), this.clazz);
     }
 
     public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options, Class<X> resultClazz) {
-        Cursor cursor = this.coll.aggregate(pipeline, options);
-
-        List<X> ret = new ArrayList<X>();
-        while (cursor.hasNext()) {
-            ret.add(this.serialize(cursor.next(), resultClazz));
-        }
-        return ret;
+        return this.aggregate(pipeline, options, this.coll.getReadPreference(), resultClazz);
     }
 
     public <X extends Object> List<X> aggregate(List<DBObject> pipeline, ReadPreference readPreference, Class<X> resultClazz) {
@@ -344,6 +328,7 @@ class MongoDao<T extends GenericIdentificableEntity> {
         while (cursor.hasNext()) {
             ret.add(this.serialize(cursor.next(), resultClazz));
         }
+
         return ret;
     }
 

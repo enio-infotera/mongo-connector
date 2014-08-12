@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
-import com.despegar.integration.mongo.query.AggregationQuery;
+import com.despegar.integration.mongo.query.AggregateQuery;
 import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.Update;
 import com.despegar.integration.mongo.query.builder.MongoAggregationQuery;
@@ -114,10 +114,14 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         this.mongoDao.dropCollection(this.collectionName);
     }
 
-    public <X extends Object> List<X> geoNear(AggregationQuery query, Class<X> returnClazz) {
+    public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
-        List<X> aggregate = this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), returnClazz);
-        return aggregate;
+        return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery());
+    }
+
+    public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
+        MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
+        return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), returnClazz);
     }
 
     public List<?> distinct(String key) {
