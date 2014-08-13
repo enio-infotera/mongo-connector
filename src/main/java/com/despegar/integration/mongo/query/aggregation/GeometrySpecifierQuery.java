@@ -1,9 +1,8 @@
 package com.despegar.integration.mongo.query.aggregation;
 
-import com.despegar.integration.mongo.query.aggregation.GeometrySpecifierQuery.Near.NearType;
 
 public class GeometrySpecifierQuery {
-    private Near near;
+    private Double[] near;
     private String distanceField;
     private Integer limit;
     private Integer num;
@@ -13,7 +12,7 @@ public class GeometrySpecifierQuery {
     private String includeLocs;
     private boolean uniqueDocs = true;
 
-    public Near getNear() {
+    public Double[] getNear() {
         return this.near;
     }
 
@@ -49,8 +48,8 @@ public class GeometrySpecifierQuery {
         return this.uniqueDocs;
     }
 
-    public GeometrySpecifierQuery setNear(NearType type, Double[] coordinates) {
-        this.near = new Near(type, coordinates);
+    public GeometrySpecifierQuery setNear(Double[] coordinates) {
+        this.near = coordinates;
         return this;
     }
 
