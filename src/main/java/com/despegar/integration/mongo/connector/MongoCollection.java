@@ -91,10 +91,10 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    public <X extends Object> X update(final Query query, final Update updateQuery, boolean upsert) {
+    public <X extends Object> X update(final Query query, final Update updateQuery) {
         final MongoQuery mongoQuery = new MongoQuery(query);
         final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
-        Object[] res = (Object[]) this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), upsert);
+        Object[] res = (Object[]) this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
         if (res.length == 1) {
             return (X) res[0];
         }

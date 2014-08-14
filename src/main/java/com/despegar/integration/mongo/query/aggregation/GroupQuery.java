@@ -12,7 +12,7 @@ public class GroupQuery {
     private Map<String, OperationWithFunction> operators = new HashMap<String, OperationWithFunction>();
     private Map<String, String> id = new HashMap<String, String>();
 
-    public GroupQuery putInId(String key, String value) {
+    public GroupQuery addGroupField(String key, String value) {
         this.id.put(key, value);
 
         return this;
