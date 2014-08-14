@@ -1,35 +1,39 @@
-package com.despegar.integration.mongo.connector.impl;
+package com.despegar.integration.mongo.query.builder;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.collections.OrderedMapIterator;
 
-import com.despegar.integration.mongo.connector.HandlerQuery;
-import com.despegar.integration.mongo.connector.HandlerQuery.ComparisonOperation;
-import com.despegar.integration.mongo.connector.HandlerQuery.MathOperation;
-import com.despegar.integration.mongo.connector.HandlerQuery.OperationWithComparison;
-import com.despegar.integration.mongo.connector.HandlerQuery.OperationWithMathFunction;
-import com.despegar.integration.mongo.connector.HandlerQuery.OperationWithRange;
-import com.despegar.integration.mongo.connector.HandlerQuery.OrderDirection;
-import com.despegar.integration.mongo.connector.HandlerQuery.RangeOperation;
-import com.despegar.integration.mongo.connector.Page;
+import com.despegar.integration.mongo.query.Query;
+import com.despegar.integration.mongo.query.Query.ComparisonOperation;
+import com.despegar.integration.mongo.query.Query.GeometryOperation;
+import com.despegar.integration.mongo.query.Query.GeometrySpecifiers;
+import com.despegar.integration.mongo.query.Query.MathOperation;
+import com.despegar.integration.mongo.query.Query.OperationWithComparison;
+import com.despegar.integration.mongo.query.Query.OperationWithGeospatialFunction;
+import com.despegar.integration.mongo.query.Query.OperationWithMathFunction;
+import com.despegar.integration.mongo.query.Query.OperationWithRange;
+import com.despegar.integration.mongo.query.Query.OrderDirection;
+import com.despegar.integration.mongo.query.Query.RangeOperation;
+import com.despegar.integration.mongo.query.QueryPage;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
-public class MongoHandlerQuery {
+public class MongoQuery {
 
     private final static String ID_FIELD = "id";
     private final static String MONGO_ID_FIELD = "_id";
 
-    private final HandlerQuery handlerQuery;
+    private final Query handlerQuery;
 
-    public MongoHandlerQuery(final HandlerQuery handerQuery) {
-        this.handlerQuery = handerQuery;
+    public MongoQuery(final Query handlerQuery) {
+        this.handlerQuery = handlerQuery;
     }
 
     public BasicDBObject getQuery() {
@@ -39,13 +43,13 @@ public class MongoHandlerQuery {
         if (this.handlerQuery.getOrs().isEmpty()) {
             res = this.createQueryFromHandler(this.handlerQuery);
         } else {
-            final List<HandlerQuery> queries = new ArrayList<HandlerQuery>();
+            final List<Query> queries = new ArrayList<Query>();
             queries.add(this.handlerQuery);
             queries.addAll(this.handlerQuery.getOrs());
 
 
             final BasicDBList orComponents = new BasicDBList();
-            for (final HandlerQuery handlerQuery : queries) {
+            for (final Query handlerQuery : queries) {
                 orComponents.add(this.createQueryFromHandler(handlerQuery));
             }
 
@@ -55,73 +59,43 @@ public class MongoHandlerQuery {
         return res;
     }
 
-    private BasicDBObject createQueryFromHandler(final HandlerQuery query) {
+    private BasicDBObject createQueryFromHandler(final Query query) {
         BasicDBObject dbQuery = this.createQuery(query);
         this.appendOrQueries(query, dbQuery);
         return dbQuery;
     }
 
-    private BasicDBObject createQuery(final HandlerQuery query) {
+    private BasicDBObject createQuery(final Query query) {
         BasicDBObject dbQuery = new BasicDBObject();
 
         for (String key : query.getFilters().keySet()) {
 
             final Object pureValue = query.getFilters().get(key);
             final Object value = pureValue;
+            if (value == null) {
+                continue;
+            }
 
             if (ID_FIELD.equals(key)) {
                 key = MONGO_ID_FIELD;
             }
 
-            dbQuery.append(key, value);
-        }
+            if (value.getClass().isEnum()) {
+                dbQuery.append(key, value.toString());
+            } else {
+                dbQuery.append(key, value);
+            }
 
-        dbQuery = this.prependUpsateOperation(query, dbQuery);
+        }
 
         this.appendRangeOperations(query, dbQuery);
         this.appendComparisionOperations(query, dbQuery);
         this.appendMathOperations(query, dbQuery);
+        this.appendGeometryOperations(query, dbQuery);
 
         return dbQuery;
     }
 
-    private BasicDBObject prependUpsateOperation(HandlerQuery query, BasicDBObject dbQuery) {
-        if (query.getUpdateOperation() != null) {
-            String updateOperation = null;
-            switch (query.getUpdateOperation()) {
-            case INC:
-                updateOperation = "$inc";
-                break;
-            case SET:
-                updateOperation = "$set";
-                break;
-            case UNSET:
-                updateOperation = "$unset";
-                break;
-            case ADD_TO_SET:
-                updateOperation = "$addToSet";
-                break;
-            case POP:
-                updateOperation = "$pop";
-                break;
-            case PULL_ALL:
-                updateOperation = "$pullAll";
-                break;
-            case PULL:
-                updateOperation = "$pull";
-                break;
-            case PUSH:
-                updateOperation = "$push";
-                break;
-            default:
-                break;
-            }
-            if (updateOperation != null) {
-                return new BasicDBObject(updateOperation, dbQuery);
-            }
-        }
-        return dbQuery;
-    }
 
     private String getComparisonOperation(final ComparisonOperation operation) {
         String comparisonOperation = null;
@@ -177,13 +151,62 @@ public class MongoHandlerQuery {
         return mathOperation;
     }
 
-    private BasicDBObject appendComparisionOperations(final HandlerQuery query, final BasicDBObject dbQuery) {
+    private String getGeometryOperation(final GeometryOperation operation) {
+        String geometryOperation = null;
+        switch (operation) {
+        case WITH_IN:
+            geometryOperation = "$geoWithin";
+            break;
+        case INTERSECTS:
+            geometryOperation = "$geoIntersects";
+            break;
+        case NEAR:
+            geometryOperation = "$near";
+            break;
+        case NEAR_SPHERE:
+            geometryOperation = "$nearSphere";
+            break;
+        }
+
+        return geometryOperation;
+    }
+
+    private String getGeometrySpecifier(final GeometrySpecifiers operation) {
+        String geometrySpecifier = null;
+        switch (operation) {
+        case BOX:
+            geometrySpecifier = "$box";
+            break;
+        case CENTER:
+            geometrySpecifier = "$center";
+            break;
+        case CENTER_SPHERE:
+            geometrySpecifier = "$centerSphere";
+            break;
+        case GEOMETRY:
+            geometrySpecifier = "$geometry";
+            break;
+        case MAX_DISTANCE:
+            geometrySpecifier = "$maxDistance";
+            break;
+        case POLYGON:
+            geometrySpecifier = "$polygon";
+            break;
+        case UNIQUE_DOCS:
+            geometrySpecifier = "$uniqueDocs";
+            break;
+        }
+
+        return geometrySpecifier;
+    }
+
+    private BasicDBObject appendComparisionOperations(final Query query, final BasicDBObject dbQuery) {
         final Set<Entry<String, OperationWithComparison>> comparison = query.getComparisonOperators().entrySet();
 
         for (final Entry<String, OperationWithComparison> entry : comparison) {
             final String key = entry.getKey();
 
-            final List<OperationWithComparison> comparisions = new ArrayList<HandlerQuery.OperationWithComparison>();
+            final List<OperationWithComparison> comparisions = new ArrayList<Query.OperationWithComparison>();
             final OperationWithComparison operationWithComparision = entry.getValue();
             comparisions.add(operationWithComparision);
 
@@ -204,7 +227,7 @@ public class MongoHandlerQuery {
         return dbQuery;
     }
 
-    private void appendRangeOperations(final HandlerQuery query, final BasicDBObject dbQuery) {
+    private void appendRangeOperations(final Query query, final BasicDBObject dbQuery) {
         final Set<Entry<String, OperationWithRange>> rangeOperations = query.getRangeOperators().entrySet();
         for (final Entry<String, OperationWithRange> entry : rangeOperations) {
             final String key = entry.getKey();
@@ -222,7 +245,30 @@ public class MongoHandlerQuery {
         }
     }
 
-    private void appendMathOperations(final HandlerQuery query, final BasicDBObject dbQuery) {
+    private void appendGeometryOperations(final Query query, final BasicDBObject dbQuery) {
+        final Set<Entry<String, OperationWithGeospatialFunction>> geoOperations = query.getGeospatialOperators().entrySet();
+        for (final Entry<String, OperationWithGeospatialFunction> entry : geoOperations) {
+            final String key = entry.getKey();
+            final GeometryOperation operation = entry.getValue().getGeometryOperation();
+            final Map<GeometrySpecifiers, Object> specifiers = entry.getValue().getGeometrySpecifiers();
+
+            String geometryOperation = this.getGeometryOperation(operation);
+            DBObject specifierProperties = new BasicDBObject();
+            for (Entry<GeometrySpecifiers, Object> specifier : specifiers.entrySet()) {
+                String geometrySpecifier = this.getGeometrySpecifier(specifier.getKey());
+                specifierProperties.put(geometrySpecifier, specifier.getValue());
+            }
+
+            DBObject geoClause = new BasicDBObject(geometryOperation, specifierProperties);
+
+            if (entry.getValue().isNegation()) {
+                geoClause = new BasicDBObject("$not", geoClause);
+            }
+            dbQuery.append(key, geoClause);
+        }
+    }
+
+    private void appendMathOperations(final Query query, final BasicDBObject dbQuery) {
         final Set<Entry<String, OperationWithMathFunction>> mathOperations = query.getMathOperators().entrySet();
         for (final Entry<String, OperationWithMathFunction> entry : mathOperations) {
             final String key = entry.getKey();
@@ -238,10 +284,10 @@ public class MongoHandlerQuery {
         }
     }
 
-    private void appendOrQueries(final HandlerQuery query, final BasicDBObject dbQuery) {
+    private void appendOrQueries(final Query query, final BasicDBObject dbQuery) {
         if (!this.handlerQuery.getAndOrs().isEmpty()) {
             final BasicDBList orComponents = new BasicDBList();
-            for (final HandlerQuery handlerQuery : this.handlerQuery.getAndOrs()) {
+            for (final Query handlerQuery : this.handlerQuery.getAndOrs()) {
                 orComponents.add(this.createQuery(handlerQuery));
             }
             dbQuery.append("$or", orComponents);
@@ -267,18 +313,18 @@ public class MongoHandlerQuery {
 
     }
 
-    public Page getPage() {
-        return this.handlerQuery.getPage();
+    public QueryPage getQueryPage() {
+        return new QueryPage(this.handlerQuery.getSkip(), this.handlerQuery.getLimit());
     }
 
     // no pongo los valores en el enum para no acoplar estos valores de mongo a un enum genérico
     private int getOrderDir(final OrderDirection orderDir) {
 
-        if (HandlerQuery.OrderDirection.ASC.equals(orderDir)) {
+        if (Query.OrderDirection.ASC.equals(orderDir)) {
             return 1;
         }
 
-        if (HandlerQuery.OrderDirection.DESC.equals(orderDir)) {
+        if (Query.OrderDirection.DESC.equals(orderDir)) {
             return -1;
         }
 

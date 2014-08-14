@@ -2,34 +2,33 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:lang="http://www.springframework.org/schema/lang"
 	xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
-	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-3.0.xsd
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
 		http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
 
-	<mongo:mongo id="com.despegar.integration.mongo.db"
-		replica-set="${com.despegar.integration.mongo.replicaSet}">
-		<mongo:options slave-ok="${com.despegar.integration.mongo.slaveOk:false}"
-			connections-per-host="${com.despegar.integration.mongo.connectionsPerHost:100}" />
-	</mongo:mongo>
-
-	<alias alias="objectMapper.alias"
-		name="${com.despegar.integration.mongo.objectMapper:com.despegar.integration.mongo.default.objectMapper}" />
-
-	<bean id="com.despegar.integration.mongo.factory" class="com.despegar.integration.mongo.support.MongoDaoFactory"
-		p:dbName="${com.despegar.integration.mongo.dbName}" p:mapper-ref="objectMapper.alias"
-		p:mongoDBConnection-ref="com.despegar.integration.mongo.db" />
-
-	<bean id="com.despegar.integration.mongo.default.objectMapper"
-		class="com.fasterxml.jackson.databind.ObjectMapper" />
+	<bean id="com.despegar.integration.mongo.mongoDBConnection" class="com.despegar.integration.mongo.connector.MongoDBConnection">
+		<constructor-arg value="${com.despegar.integration.mongo.dbName}" />
+		<constructor-arg value="${com.despegar.integration.mongo.replicaSet}" />
+	</bean>		
+	
+	<bean id="com.despegar.integration.mongo.collection.factory" class="com.despegar.integration.mongo.connector.MongoCollectionFactory"
+		p:mapper-ref="objectMapper.alias"
+		p:idGenerator-ref="idGenerator.alias">
+		<constructor-arg ref="com.despegar.integration.mongo.mongoDBConnection" />
+	</bean>
 		
-	<bean id="com.despegar.integration.mongo.id.generator.long"
-		class="com.despegar.integration.mongo.id.LongIdGenerator"
-		p:mongoDb-ref="com.despegar.integration.mongo.db"
-		p:dbName="${com.despegar.integration.mongo.dbName}" 
-		p:counterCollectionName="${com.despegar.integration.mongo.counters:counters}"/>
-			
-	<bean id="com.despegar.integration.mongo.id.generator.string"
-		class="com.despegar.integration.mongo.id.StringIdGenerator" />
+	<alias alias="objectMapper.alias"
+	name="${com.despegar.integration.mongo.objectMapper:com.despegar.integration.mongo.objectMapper}" />
+	
+	<bean id="com.despegar.integration.mongo.objectMapper"
+	class="com.fasterxml.jackson.databind.ObjectMapper" />
+	
+	<alias alias="idGenerator.alias"
+	name="${com.despegar.integration.mongo.idGenerator:com.despegar.integration.mongo.generator.string}"/>
+	
+	<bean id="com.despegar.integration.mongo.generator.string"
+	class="com.despegar.integration.mongo.id.StringIdGenerator" />
+	
+
 </beans>

@@ -7,7 +7,7 @@
 	</parent>
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
-	<version>0.1.9-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>Mongo Connector</name>
 	<description>Helper component to connect to mongo fast and easy</description>
 
@@ -19,16 +19,15 @@
 	</scm>
 
 	<properties>
-		<mongo-jackson-mapper.version>2.0</mongo-jackson-mapper.version>
-		<spring-mongodb.version>1.3.2.RELEASE</spring-mongodb.version>
-		<commons-lang.version>2.6</commons-lang.version>
+		<mongodb.version>2.12.3</mongodb.version>
+		<fasterxml.version>2.4.1.3</fasterxml.version>		
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
-			<version>${commons-lang.version}</version>
+			<version>2.6</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -42,34 +41,14 @@
 			<version>3.2.1</version>
 		</dependency>
 		<dependency>
-			<groupId>com.despegar.integration</groupId>
-			<artifactId>domain</artifactId>
-			<version>0.0.5</version>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		    <version>${fasterxml.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>net.vz.mongodb.jackson</groupId>
-			<artifactId>mongo-jackson-mapper</artifactId>
-			<version>${mongo-jackson-mapper.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>13.0.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-mongodb</artifactId>
-			<version>${spring-mongodb.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>spring-beans</artifactId>
-					<groupId>org.springframework</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>spring-expression</artifactId>
-					<groupId>org.springframework</groupId>
-				</exclusion>
-			</exclusions>
+		    <groupId>org.mongodb</groupId>
+		    <artifactId>mongo-java-driver</artifactId>
+		    <version>${mongodb.version}</version>
 		</dependency>
 	</dependencies>
 </project>
