@@ -109,13 +109,13 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
             returnNew, false);
     }
 
-    public <X extends Object> void remove(final X id) {
-        this.mongoDao.delete(this.collectionName, id);
+    public <X extends Object> boolean remove(final X id) {
+        return this.mongoDao.delete(this.collectionName, id);
     }
 
-    public void remove(Query query) {
+    public boolean remove(Query query) {
         final MongoQuery mongoQuery = new MongoQuery(query);
-        this.mongoDao.delete(this.collectionName, mongoQuery.getQuery());
+        return this.mongoDao.delete(this.collectionName, mongoQuery.getQuery());
     }
 
     public void removeAll() {

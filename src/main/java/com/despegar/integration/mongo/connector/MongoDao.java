@@ -288,13 +288,13 @@ class MongoDao<T extends GenericIdentificableEntity> {
         coll.rename(newName, dropTarget);
     }
 
-    public void delete(String collection, DBObject query) {
+    public boolean delete(String collection, DBObject query) {
         DBCollection coll = this.mongoDb.getCollection(collection);
-        coll.remove(query);
+        return coll.remove(query).isUpdateOfExisting();
     }
 
-    public <X extends Object> void delete(String collection, X id) {
-        this.delete(collection, new BasicDBObject("_id", id));
+    public <X extends Object> boolean delete(String collection, X id) {
+        return this.delete(collection, new BasicDBObject("_id", id));
     }
 
     public void ensureIndex(String collection, DBObject index) {
