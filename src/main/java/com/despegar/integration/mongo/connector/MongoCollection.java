@@ -141,6 +141,11 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         return this.mongoDao.distinct(key, q.getQuery());
     }
 
+    public Boolean exists(Query query) {
+        MongoQuery q = new MongoQuery(query);
+        return this.mongoDao.exists(q.getQuery());
+    }
+
     private ReadPreference isCrucialDataIntegration(Query query) {
         if (query.isCrucialDataIntegration()) {
             return ReadPreference.primary();
