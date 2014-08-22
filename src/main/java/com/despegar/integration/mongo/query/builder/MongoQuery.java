@@ -3,7 +3,6 @@ package com.despegar.integration.mongo.query.builder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -13,6 +12,7 @@ import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.Query.ComparisonOperation;
 import com.despegar.integration.mongo.query.Query.GeometryOperation;
 import com.despegar.integration.mongo.query.Query.GeometrySpecifiers;
+import com.despegar.integration.mongo.query.Query.GeometryType;
 import com.despegar.integration.mongo.query.Query.MathOperation;
 import com.despegar.integration.mongo.query.Query.OperationWithComparison;
 import com.despegar.integration.mongo.query.Query.OperationWithGeospatialFunction;
@@ -200,6 +200,20 @@ public class MongoQuery {
         return geometrySpecifier;
     }
 
+    private String getGeometryType(final GeometryType type) {
+        String geometryType = null;
+        switch (type) {
+        case POINT:
+            geometryType = "Point";
+            break;
+        case POLYGON:
+            geometryType = "Polygon";
+            break;
+        }
+
+        return geometryType;
+    }
+
     private BasicDBObject appendComparisionOperations(final Query query, final BasicDBObject dbQuery) {
         final Set<Entry<String, OperationWithComparison>> comparison = query.getComparisonOperators().entrySet();
 
@@ -247,19 +261,26 @@ public class MongoQuery {
 
     private void appendGeometryOperations(final Query query, final BasicDBObject dbQuery) {
         final Set<Entry<String, OperationWithGeospatialFunction>> geoOperations = query.getGeospatialOperators().entrySet();
+
         for (final Entry<String, OperationWithGeospatialFunction> entry : geoOperations) {
             final String key = entry.getKey();
             final GeometryOperation operation = entry.getValue().getGeometryOperation();
-            final Map<GeometrySpecifiers, Object> specifiers = entry.getValue().getGeometrySpecifiers();
+            final GeometrySpecifiers specifier = entry.getValue().getSpecifiers();
+            final GeometryType type = entry.getValue().getType();
 
             String geometryOperation = this.getGeometryOperation(operation);
-            DBObject specifierProperties = new BasicDBObject();
-            for (Entry<GeometrySpecifiers, Object> specifier : specifiers.entrySet()) {
-                String geometrySpecifier = this.getGeometrySpecifier(specifier.getKey());
-                specifierProperties.put(geometrySpecifier, specifier.getValue());
-            }
+            String geometrySpecifier = this.getGeometrySpecifier(specifier);
+            String geometryType = this.getGeometryType(type);
 
-            DBObject geoClause = new BasicDBObject(geometryOperation, specifierProperties);
+            DBObject specifierObject = new BasicDBObject();
+            specifierObject.put("type", geometryType);
+            specifierObject.put("coordinates", entry.getValue().getCoordinates());
+
+            DBObject operationObject = new BasicDBObject();
+            operationObject.put(geometrySpecifier, specifierObject);
+
+            DBObject geoClause = new BasicDBObject();
+            geoClause.put(geometryOperation, operationObject);
 
             if (entry.getValue().isNegation()) {
                 geoClause = new BasicDBObject("$not", geoClause);

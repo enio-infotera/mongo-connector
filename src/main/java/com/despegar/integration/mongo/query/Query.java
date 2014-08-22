@@ -36,6 +36,10 @@ public class Query {
         GEOMETRY, MAX_DISTANCE, CENTER, CENTER_SPHERE, BOX, POLYGON, UNIQUE_DOCS
     }
 
+    public static enum GeometryType {
+        POINT, POLYGON
+    }
+
     private Map<String, OperationWithComparison> comparisonOperators = new HashMap<String, OperationWithComparison>();
     private Map<String, OperationWithRange> rangeOperators = new HashMap<String, OperationWithRange>();
     private Map<String, OperationWithGeospatialFunction> geospatialOperators = new HashMap<String, OperationWithGeospatialFunction>();
@@ -152,12 +156,15 @@ public class Query {
      * @param value
      * @return
      */
-    public Query put(String key, GeometryOperation operator, Map<GeometrySpecifiers, Object> value) {
-        return this.put(key, operator, value, false);
+    public Query put(String key, GeometryOperation operator, GeometrySpecifiers specifiers, GeometryType type,
+        Object coordinates) {
+        return this.put(key, operator, specifiers, type, coordinates, false);
     }
 
-    public Query put(String key, GeometryOperation operator, Map<GeometrySpecifiers, Object> value, boolean negation) {
-        this.getGeospatialOperators().put(key, new OperationWithGeospatialFunction(operator, value, negation));
+    public Query put(String key, GeometryOperation operator, GeometrySpecifiers specifiers, GeometryType type,
+        Object coordinates, boolean negation) {
+        this.getGeospatialOperators().put(key,
+            new OperationWithGeospatialFunction(operator, specifiers, type, coordinates, negation));
         return this;
     }
 
@@ -358,14 +365,18 @@ public class Query {
 
     public static class OperationWithGeospatialFunction {
         private GeometryOperation geometryOperation;
-        private Map<GeometrySpecifiers, Object> geometrySpecifiers;
+        private GeometrySpecifiers specifiers;
+        private GeometryType type;
+        private Object coordinates;
         private boolean negation;
 
-        public OperationWithGeospatialFunction(GeometryOperation geometryOperation,
-            Map<GeometrySpecifiers, Object> gemetrySpecifiers, boolean negation) {
+        public OperationWithGeospatialFunction(GeometryOperation geometryOperation, GeometrySpecifiers specifiers,
+            GeometryType type, Object coordinates, boolean negation) {
             super();
             this.geometryOperation = geometryOperation;
-            this.geometrySpecifiers = gemetrySpecifiers;
+            this.specifiers = specifiers;
+            this.type = type;
+            this.coordinates = coordinates;
             this.negation = negation;
         }
 
@@ -373,12 +384,20 @@ public class Query {
             return this.geometryOperation;
         }
 
-        public Map<GeometrySpecifiers, Object> getGeometrySpecifiers() {
-            return this.geometrySpecifiers;
-        }
-
         public boolean isNegation() {
             return this.negation;
+        }
+
+        public GeometrySpecifiers getSpecifiers() {
+            return this.specifiers;
+        }
+
+        public GeometryType getType() {
+            return this.type;
+        }
+
+        public Object getCoordinates() {
+            return this.coordinates;
         }
     }
 
