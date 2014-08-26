@@ -1,6 +1,5 @@
-package com.despegar.integration.mongo.query.builder;
+package com.despegar.integration.mongo.query;
 
-import com.despegar.integration.mongo.query.Update;
 import com.mongodb.BasicDBObject;
 
 public class MongoUpdate {

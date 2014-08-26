@@ -16,10 +16,10 @@ public class Update {
         return this.updateOperation;
     }
 
-    public Update put(String key, Object value) {
+    public Update put(String property, Object value) {
 
-        if (key != null) {
-            this.getProperties().put(key, value);
+        if (property != null) {
+            this.getProperties().put(property, value);
         }
 
         return this;

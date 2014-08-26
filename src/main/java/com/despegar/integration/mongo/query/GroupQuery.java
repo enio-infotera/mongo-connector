@@ -1,4 +1,4 @@
-package com.despegar.integration.mongo.query.aggregation;
+package com.despegar.integration.mongo.query;
 
 import java.util.HashMap;
 import java.util.Map;

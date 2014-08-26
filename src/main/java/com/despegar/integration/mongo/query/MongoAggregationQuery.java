@@ -1,20 +1,16 @@
-package com.despegar.integration.mongo.query.builder;
+package com.despegar.integration.mongo.query;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.despegar.integration.mongo.query.AggregateQuery;
 import com.despegar.integration.mongo.query.AggregateQuery.Aggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.AggregateOperation;
 import com.despegar.integration.mongo.query.AggregateQuery.GeoNearAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.GroupAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.MatchAggregate;
-import com.despegar.integration.mongo.query.Query;
-import com.despegar.integration.mongo.query.aggregation.GeometrySpecifierQuery;
-import com.despegar.integration.mongo.query.aggregation.GroupQuery;
-import com.despegar.integration.mongo.query.aggregation.GroupQuery.GroupOperation;
-import com.despegar.integration.mongo.query.aggregation.GroupQuery.OperationWithFunction;
+import com.despegar.integration.mongo.query.GroupQuery.GroupOperation;
+import com.despegar.integration.mongo.query.GroupQuery.OperationWithFunction;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 

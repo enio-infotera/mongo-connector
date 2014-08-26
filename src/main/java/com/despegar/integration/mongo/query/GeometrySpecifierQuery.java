@@ -1,4 +1,4 @@
-package com.despegar.integration.mongo.query.aggregation;
+package com.despegar.integration.mongo.query;
 
 
 public class GeometrySpecifierQuery {

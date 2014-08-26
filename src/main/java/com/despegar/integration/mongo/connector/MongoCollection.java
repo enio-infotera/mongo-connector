@@ -6,11 +6,11 @@ import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.query.AggregateQuery;
+import com.despegar.integration.mongo.query.MongoAggregationQuery;
+import com.despegar.integration.mongo.query.MongoQuery;
+import com.despegar.integration.mongo.query.MongoUpdate;
 import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.Update;
-import com.despegar.integration.mongo.query.builder.MongoAggregationQuery;
-import com.despegar.integration.mongo.query.builder.MongoQuery;
-import com.despegar.integration.mongo.query.builder.MongoUpdate;
 import com.mongodb.ReadPreference;
 
 public class MongoCollection<T extends GenericIdentificableEntity<?>> {
@@ -31,7 +31,7 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
 
     public T getOne() {
         Query query = new Query();
-        query.setLimit(1);
+        query.limit(1);
 
         return this.getOne(query);
     }
@@ -63,8 +63,8 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
     }
 
     public List<T> getAll(Query query, MutableInt count, Integer pagingOffset, Integer pagingLimit) {
-        query.setSkip(pagingOffset);
-        query.setLimit(pagingLimit);
+        query.skip(pagingOffset);
+        query.limit(pagingLimit);
         return this.getAll(query, count);
     }
 

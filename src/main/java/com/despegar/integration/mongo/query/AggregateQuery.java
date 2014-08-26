@@ -3,12 +3,9 @@ package com.despegar.integration.mongo.query;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.despegar.integration.mongo.query.aggregation.GeometrySpecifierQuery;
-import com.despegar.integration.mongo.query.aggregation.GroupQuery;
-
 public class AggregateQuery {
 
-    public static enum AggregateOperation {
+    static enum AggregateOperation {
         MATCH, GEO_NEAR, GROUP;
     }
 
