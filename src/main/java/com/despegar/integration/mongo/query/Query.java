@@ -13,7 +13,7 @@ import org.springframework.util.Assert;
 
 public class Query {
 
-    public class Point {
+    public static class Point {
         private Double latitude;
         private Double longitude;
 
@@ -522,8 +522,8 @@ public class Query {
         private GeometryType type;
         private Point[] coordinates;
 
-        public OperationWithGeospatialFunction(GeometryOperation geometryOperation, GeometryShape shapes,
-            GeometryType type, Point[] coordinates) {
+        public OperationWithGeospatialFunction(GeometryOperation geometryOperation, GeometryShape shapes, GeometryType type,
+            Point[] coordinates) {
             super();
             this.geometryOperation = geometryOperation;
             this.shapes = shapes;

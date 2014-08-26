@@ -18,6 +18,7 @@ import com.despegar.integration.mongo.query.Query.OperationWithGeospatialFunctio
 import com.despegar.integration.mongo.query.Query.OperationWithMathFunction;
 import com.despegar.integration.mongo.query.Query.OperationWithRange;
 import com.despegar.integration.mongo.query.Query.OrderDirection;
+import com.despegar.integration.mongo.query.Query.Point;
 import com.despegar.integration.mongo.query.Query.RangeOperation;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -255,6 +256,7 @@ public class MongoQuery {
             final String key = entry.getKey();
             final GeometryOperation operation = entry.getValue().getGeometryOperation();
             final GeometryShape shape = entry.getValue().getShapes();
+            Point[] points = entry.getValue().getCoordinates();
             DBObject operationObject = new BasicDBObject();
             if (shape == null) {
                 final GeometryType type = entry.getValue().getType();
@@ -262,12 +264,14 @@ public class MongoQuery {
 
                 DBObject specifierObject = new BasicDBObject();
                 specifierObject.put("type", geometryType);
-                specifierObject.put("coordinates", entry.getValue().getCoordinates());
+
+                specifierObject.put("coordinates",
+                    GeometryType.POINT == type ? this.getCoordenate(points[0]) : this.getCoordinates(points));
 
                 operationObject.put("$geometry", specifierObject);
             } else {
                 String geometryShape = this.getGeometryShape(shape);
-                operationObject.put(geometryShape, entry.getValue().getCoordinates());
+                operationObject.put(geometryShape, this.getCoordinates(points));
             }
 
             String geometryOperation = this.getGeometryOperation(operation);
@@ -321,6 +325,20 @@ public class MongoQuery {
         }
         return null;
 
+    }
+
+    private Collection<Double[]> getCoordinates(Point... points) {
+        Collection<Double[]> collection = new ArrayList<Double[]>();
+        for (Point point : points) {
+            collection.add(this.getCoordenate(point));
+        }
+
+        return collection;
+    }
+
+    private Double[] getCoordenate(Point point) {
+        Double[] coordinates = {point.getLongitude(), point.getLatitude()};
+        return coordinates;
     }
 
     public QueryPage getQueryPage() {
