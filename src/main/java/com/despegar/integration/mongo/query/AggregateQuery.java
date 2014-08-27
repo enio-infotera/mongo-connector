@@ -15,7 +15,7 @@ public class AggregateQuery {
         return this.piplines;
     }
 
-    public AggregateQuery addMatch(Query query) {
+    public AggregateQuery match(Query query) {
         if (query == null) {
             return this;
         }
@@ -23,7 +23,7 @@ public class AggregateQuery {
         return this;
     }
 
-    public AggregateQuery addGeoNear(GeometrySpecifierQuery geoSpecifier) {
+    public AggregateQuery geoNear(GeometrySpecifierQuery geoSpecifier) {
         if (geoSpecifier == null) {
             return this;
         }
@@ -31,7 +31,7 @@ public class AggregateQuery {
         return this;
     }
 
-    public AggregateQuery addGroup(GroupQuery groupQuery) {
+    public AggregateQuery group(GroupQuery groupQuery) {
         if (groupQuery == null) {
             return this;
         }

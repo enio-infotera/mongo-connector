@@ -10,9 +10,9 @@ import org.apache.commons.collections.OrderedMapIterator;
 
 import com.despegar.integration.mongo.query.Query.ComparisonOperation;
 import com.despegar.integration.mongo.query.Query.GeometryOperation;
-import com.despegar.integration.mongo.query.Query.GeometryShape;
 import com.despegar.integration.mongo.query.Query.GeometryType;
 import com.despegar.integration.mongo.query.Query.MathOperation;
+import com.despegar.integration.mongo.query.Query.OperationGeoNearFunction;
 import com.despegar.integration.mongo.query.Query.OperationWithComparison;
 import com.despegar.integration.mongo.query.Query.OperationWithGeospatialFunction;
 import com.despegar.integration.mongo.query.Query.OperationWithMathFunction;
@@ -170,25 +170,6 @@ public class MongoQuery {
         return geometryOperation;
     }
 
-    private String getGeometryShape(final GeometryShape operation) {
-        String geometryShape = null;
-        switch (operation) {
-        case BOX:
-            geometryShape = "$box";
-            break;
-        case CENTER:
-            geometryShape = "$center";
-            break;
-        case CENTER_SPHERE:
-            geometryShape = "$centerSphere";
-            break;
-        case POLYGON:
-            geometryShape = "$polygon";
-            break;
-        }
-
-        return geometryShape;
-    }
 
     private String getGeometryType(final GeometryType type) {
         String geometryType = null;
@@ -199,6 +180,8 @@ public class MongoQuery {
         case POLYGON:
             geometryType = "Polygon";
             break;
+        case LINE:
+            geometryType = "LineString";
         }
 
         return geometryType;
@@ -255,23 +238,29 @@ public class MongoQuery {
         for (final Entry<String, OperationWithGeospatialFunction> entry : geoOperations) {
             final String key = entry.getKey();
             final GeometryOperation operation = entry.getValue().getGeometryOperation();
-            final GeometryShape shape = entry.getValue().getShapes();
+
             Point[] points = entry.getValue().getCoordinates();
             DBObject operationObject = new BasicDBObject();
-            if (shape == null) {
-                final GeometryType type = entry.getValue().getType();
-                String geometryType = this.getGeometryType(type);
 
-                DBObject specifierObject = new BasicDBObject();
-                specifierObject.put("type", geometryType);
+            final GeometryType type = entry.getValue().getType();
+            String geometryType = this.getGeometryType(type);
 
-                specifierObject.put("coordinates",
-                    GeometryType.POINT == type ? this.getCoordenate(points[0]) : this.getCoordinates(points));
+            DBObject specifierObject = new BasicDBObject();
+            specifierObject.put("type", geometryType);
 
-                operationObject.put("$geometry", specifierObject);
-            } else {
-                String geometryShape = this.getGeometryShape(shape);
-                operationObject.put(geometryShape, this.getCoordinates(points));
+            specifierObject.put("coordinates",
+                GeometryType.POINT == type ? this.getCoordenate(points[0]) : this.getCoordinates(points));
+
+            operationObject.put("$geometry", specifierObject);
+
+            if (entry.getValue() instanceof OperationGeoNearFunction) {
+                OperationGeoNearFunction operationFunction = (OperationGeoNearFunction) entry.getValue();
+                if (operationFunction.getMaxDistance() != null) {
+                    operationObject.put("$maxDistance", operationFunction.getMaxDistance());
+                }
+                if (operationFunction.getMinDistance() != null) {
+                    operationObject.put("$minDistance", operationFunction.getMaxDistance());
+                }
             }
 
             String geometryOperation = this.getGeometryOperation(operation);

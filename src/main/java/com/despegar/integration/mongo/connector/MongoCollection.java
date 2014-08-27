@@ -29,28 +29,60 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         return this.mongoDao.findOne(id);
     }
 
+    @Deprecated
     public T getOne() {
+        return this.findOne();
+    }
+
+    @Deprecated
+    public T getOne(final Query query) {
+        return this.findOne(query);
+    }
+
+    public T findOne() {
         Query query = new Query();
         query.limit(1);
 
-        return this.getOne(query);
+        return this.findOne(query);
     }
 
-    public T getOne(final Query query) {
+    public T findOne(final Query query) {
         final MongoQuery mhq = new MongoQuery(query);
 
         return this.mongoDao.findOne(mhq.getQuery(), mhq.getSortInfo(), mhq.getQueryPage());
     }
 
+    @Deprecated
     public List<T> getAll() {
-        return this.getAll(null);
+        return this.find();
     }
 
+    @Deprecated
     public List<T> getAll(final Query query) {
-        return this.getAll(query, null);
+        return this.find(query);
     }
 
+    @Deprecated
     public List<T> getAll(final Query query, final MutableInt count) {
+        return this.find(query, count);
+    }
+
+    @Deprecated
+    public List<T> getAll(Query query, MutableInt count, Integer pagingOffset, Integer pagingLimit) {
+        query.skip(pagingOffset);
+        query.limit(pagingLimit);
+        return this.find(query, count);
+    }
+
+    public List<T> find() {
+        return this.find(null);
+    }
+
+    public List<T> find(final Query query) {
+        return this.find(query, null);
+    }
+
+    public List<T> find(final Query query, final MutableInt count) {
 
         if (query == null) {
             return this.mongoDao.find();
@@ -60,12 +92,6 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
 
         return this.mongoDao.find(mongoQuery.getQuery(), null, mongoQuery.getSortInfo(), mongoQuery.getQueryPage(), count,
             this.isCrucialDataIntegration(query));
-    }
-
-    public List<T> getAll(Query query, MutableInt count, Integer pagingOffset, Integer pagingLimit) {
-        query.skip(pagingOffset);
-        query.limit(pagingLimit);
-        return this.getAll(query, count);
     }
 
     public Integer count(final Query query) {
@@ -122,11 +148,19 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         this.mongoDao.dropCollection(this.collectionName);
     }
 
+    /*
+     * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
+     * this framework
+     */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
         return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery());
     }
 
+    /*
+     * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
+     * this framework
+     */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
         return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), returnClazz);
@@ -152,14 +186,6 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         }
 
         return null;
-    }
-
-    public void setCollectionName(final String collectionName) {
-        this.collectionName = collectionName;
-    }
-
-    public void setClazz(final Class<T> clazz) {
-        this.clazz = clazz;
     }
 
 }

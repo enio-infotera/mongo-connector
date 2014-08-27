@@ -35,6 +35,10 @@ public class Query {
         ASC, DESC
     }
 
+    public static enum GeometryType {
+        POINT, POLYGON, LINE
+    }
+
     @Deprecated
     // delete public... only static enum
     public static enum RangeOperation {
@@ -55,14 +59,6 @@ public class Query {
 
     static enum GeometryOperation {
         WITH_IN, INTERSECTS, NEAR, NEAR_SPHERE
-    }
-
-    public static enum GeometryShape {
-        BOX, CENTER, CENTER_SPHERE, POLYGON
-    }
-
-    public static enum GeometryType {
-        POINT, POLYGON, LINE
     }
 
     private Map<String, OperationWithComparison> comparisonOperators = new HashMap<String, OperationWithComparison>();
@@ -287,7 +283,8 @@ public class Query {
     }
 
     public Query near(String property, Point point, Double maxDistance, Double minDistance) {
-        this.put(property, GeometryOperation.NEAR, null, GeometryType.POINT, point);
+        this.getGeospatialOperators().put(property,
+            new OperationGeoNearFunction(Boolean.FALSE, maxDistance, minDistance, point));
         return this;
     }
 
@@ -302,23 +299,19 @@ public class Query {
     }
 
     public Query nearSphere(String property, Point point, Double maxDistance, Double minDistance) {
-        this.put(property, GeometryOperation.NEAR_SPHERE, null, GeometryType.POINT, point);
+        this.getGeospatialOperators().put(property,
+            new OperationGeoNearFunction(Boolean.TRUE, maxDistance, minDistance, point));
         return this;
     }
 
-    public Query within(String property, GeometryShape geometryShapes, Point... points) {
-        this.put(property, GeometryOperation.WITH_IN, geometryShapes, null, points);
+    public Query within(String property, Point... points) {
+        this.getGeospatialOperators().put(property, new OperationGeoWithinFunction(points));
         return this;
     }
 
     public Query intersect(String property, GeometryType geometryType, Point... points) {
-        this.put(property, GeometryOperation.INTERSECTS, null, geometryType, points);
+        this.getGeospatialOperators().put(property, new OperationGeoIntersectFunction(geometryType, points));
         return this;
-    }
-
-    private void put(String key, GeometryOperation operator, GeometryShape specifiers, GeometryType type,
-        Point... coordinates) {
-        this.getGeospatialOperators().put(key, new OperationWithGeospatialFunction(operator, specifiers, type, coordinates));
     }
 
     public Query andOr(Collection<Query> orQueries) {
@@ -516,27 +509,61 @@ public class Query {
         }
     }
 
+    public static class OperationGeoWithinFunction
+        extends OperationWithGeospatialFunction {
+
+        private OperationGeoWithinFunction(Point... points) {
+            super(GeometryOperation.WITH_IN, GeometryType.POLYGON, points);
+        }
+    }
+
+    public static class OperationGeoIntersectFunction
+        extends OperationWithGeospatialFunction {
+
+        public OperationGeoIntersectFunction(GeometryType type, Point[] coordinates) {
+            super(GeometryOperation.INTERSECTS, type, coordinates);
+        }
+
+    }
+
+    public static class OperationGeoNearFunction
+        extends OperationWithGeospatialFunction {
+        private Double maxDistance;
+        private Double minDistance;
+
+        public OperationGeoNearFunction(Boolean sphere, Double maxDistance, Double minDistance, Point point) {
+            super(sphere ? GeometryOperation.NEAR_SPHERE : GeometryOperation.NEAR, GeometryType.POINT, point);
+            this.maxDistance = maxDistance;
+            this.minDistance = minDistance;
+        }
+
+        public Double getMaxDistance() {
+            return this.maxDistance;
+        }
+
+        public Double getMinDistance() {
+            return this.minDistance;
+        }
+    }
+
     public static class OperationWithGeospatialFunction {
         private GeometryOperation geometryOperation;
-        private GeometryShape shapes;
         private GeometryType type;
         private Point[] coordinates;
 
-        public OperationWithGeospatialFunction(GeometryOperation geometryOperation, GeometryShape shapes, GeometryType type,
-            Point[] coordinates) {
+        protected OperationWithGeospatialFunction() {
+
+        }
+
+        public OperationWithGeospatialFunction(GeometryOperation geometryOperation, GeometryType type, Point... coordinates) {
             super();
             this.geometryOperation = geometryOperation;
-            this.shapes = shapes;
             this.type = type;
             this.coordinates = coordinates;
         }
 
         public GeometryOperation getGeometryOperation() {
             return this.geometryOperation;
-        }
-
-        public GeometryShape getShapes() {
-            return this.shapes;
         }
 
         public GeometryType getType() {
