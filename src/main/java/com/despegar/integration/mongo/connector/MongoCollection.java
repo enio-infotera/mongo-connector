@@ -150,7 +150,7 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
 
     /*
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework
+     * this framework, but you can test this
      */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -159,7 +159,7 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
 
     /*
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework
+     * this framework, but you can test this
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
