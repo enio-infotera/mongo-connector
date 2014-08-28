@@ -1,6 +1,6 @@
 # Mongo-Connector V1 (o V2, si contamos la 0)
 
-Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple todas las necesidades que tengamos a la hora de comunicarnos con una base de datos mongo y utilizar sus funcionalidades. La idea es que sea un componente muy liviano y pero flexible, de "manufactura" local, lo que nos permite agregar nuevas funcionalidades a medida que mongo vaya agregando funciones, o modificar existentes para hacerlas aun mas simples y accesibles, a diferencia de otros frameworks como Morphia o Jongo, donde nos encontramos limitados a lo que ya se haya implementado (que hay que decirlo, no estan todas las funcionalidades de mongo implementadas en ninguno de dichos frameworks). 
+Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple todas las necesidades que tengamos a la hora de comunicarnos con una base de datos mongo y utilizar sus funcionalidades. La idea es que sea un componente muy liviano y flexible, de "manufactura" local, lo que nos permite agregar nuevas funcionalidades a medida que mongo vaya agregando funciones, o modificar existentes para hacerlas aun mas simples y accesibles, a diferencia de otros frameworks como Morphia o Jongo, donde nos encontramos limitados a lo que ya se haya implementado (que hay que decirlo, no estan todas las funcionalidades de mongo implementadas en ninguno de dichos frameworks). 
 
 ### Dependencia
 
@@ -32,14 +32,25 @@ Una vez establecida la conexion, se puede utilizar un factory de MongoCollection
 	
     public class Cat implements IdentificableEntity  {
     
+	private String id;
     	private String type;
     	private String name;
     	private Integer age;
     	@JsonIgnore
     	private String nonSaveProperty;
     
+	@Override
+	public String getId() {
+	    return this.id;
+	}
+
+	@Override
+	public void setId(String id) {
+	    this.id = id;	
+	}
+
     	public String getType() {
-    	    return type;
+    	    return this.type;
     	}
     	public void setType(String type) {
     	    this.type = type;
@@ -89,11 +100,11 @@ El aggregation framework es algo que estamos incluyendo en mongo connector de a 
         query.match(mQuery);
         query.group(gQuery);                
         
-        collectionCats.aggregate(query, CatNameList.class);
+        Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNameList.class);
 
 #### Creando instancias en Spring xml
 
-Tambien, utilizando los factories se pueden instancia beans de MongoCollection por spring, para luego inyectarlos directamente en los diferentes servicios de nuestra aplicacion
+Tambien, utilizando los factories se pueden instanciar beans de MongoCollection por spring, para luego inyectarlos directamente en los diferentes servicios de nuestra aplicacion
 
 	<import resource="classpath:com/despegar/integration/mongo/mongo-context.xml" />
 
