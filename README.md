@@ -32,26 +32,27 @@ Una vez establecida la conexion, se puede utilizar un factory de MongoCollection
 	
     public class Cat implements IdentificableEntity  {
     
-	private String id;
+        private String id;
     	private String type;
     	private String name;
     	private Integer age;
     	@JsonIgnore
     	private String nonSaveProperty;
     
-	@Override
-	public String getId() {
-	    return this.id;
-	}
+        @Override
+        public String getId() {
+            return this.id;
+        }
 
-	@Override
-	public void setId(String id) {
-	    this.id = id;	
-	}
+        @Override
+        public void setId(String id) {
+            this.id = id;	
+        }
 
-    	public String getType() {
+        public String getType() {
     	    return this.type;
     	}
+
     	public void setType(String type) {
     	    this.type = type;
     	}
