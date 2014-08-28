@@ -198,43 +198,43 @@ class MongoDao<T extends GenericIdentificableEntity> {
         return (X) insert.getUpsertedId();
     }
 
-    public Object update(DBObject query, DBObject value, boolean upsert, boolean multi, WriteConcern concern) {
+    public Integer update(DBObject query, DBObject value, boolean upsert, boolean multi, WriteConcern concern) {
         WriteResult update = this.coll.update(query, value, upsert, multi, concern);
 
-        return update.getUpsertedId();
+        return update.getN();
     }
 
-    public Object update(BasicDBObject query, BasicDBObject value, boolean upsert) {
+    public Integer update(BasicDBObject query, BasicDBObject value, boolean upsert) {
         return this.update(query, value, upsert, WriteConcern.SAFE);
     }
 
-    public Object update(DBObject query, DBObject value, boolean upsert, WriteConcern concern) {
+    public Integer update(DBObject query, DBObject value, boolean upsert, WriteConcern concern) {
         return this.update(query, value, upsert, false, concern);
     }
 
-    public Object update(DBObject query, DBObject value, WriteConcern concern) {
+    public Integer update(DBObject query, DBObject value, WriteConcern concern) {
         return this.update(query, value, false, false, concern);
     }
 
-    public Object update(T query, T value, boolean upsert, boolean multi, WriteConcern concern) {
+    public Integer update(T query, T value, boolean upsert, boolean multi, WriteConcern concern) {
         WriteResult update = this.coll.update(this.deserialize(query), this.deserialize(value), upsert, multi, concern);
 
-        return update.getUpsertedId();
+        return update.getN();
     }
 
-    public Object update(T query, T value, boolean upsert) {
+    public Integer update(T query, T value, boolean upsert) {
         return this.update(query, value, upsert, WriteConcern.SAFE);
     }
 
-    public Object update(T query, T value, boolean upsert, WriteConcern concern) {
+    public Integer update(T query, T value, boolean upsert, WriteConcern concern) {
         return this.update(query, value, upsert, false, concern);
     }
 
-    public Object update(T query, T value, WriteConcern concern) {
+    public Integer update(T query, T value, WriteConcern concern) {
         return this.update(query, value, false, false, concern);
     }
 
-    public <X extends Object> X updateById(X id, T value) {
+    private <X extends Object> X updateById(X id, T value) {
         DBObject o = new BasicDBObject();
         o.put("_id", id);
         this.coll.update(o, this.deserialize(value));

@@ -52,6 +52,10 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         return this.mongoDao.findOne(mhq.getQuery(), mhq.getSortInfo(), mhq.getQueryPage());
     }
 
+    public <X extends Object> T findOne(final X id) {
+        return this.mongoDao.findOne(id);
+    }
+
     @Deprecated
     public List<T> getAll() {
         return this.find();
@@ -116,15 +120,18 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         return this.mongoDao.updateOrInsert(t);
     }
 
-    @SuppressWarnings("unchecked")
-    public <X extends Object> X update(final Query query, final Update updateQuery) {
+    public <X extends Object> Integer update(final Query query, final Update updateQuery) {
         final MongoQuery mongoQuery = new MongoQuery(query);
         final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
-        Object[] res = (Object[]) this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
-        if (res.length == 1) {
-            return (X) res[0];
-        }
-        return null;
+        return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
+    }
+
+    public <X extends Object> Integer update(final X id, final Update updateQuery) {
+        Query query = new Query();
+        query.equals("_id", id);
+        final MongoQuery mongoQuery = new MongoQuery(query);
+        final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
+        return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
     }
 
     public T getAndUpdate(final Query query, boolean remove, final Update updateQuery, boolean returnNew) {
@@ -166,13 +173,13 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), returnClazz);
     }
 
-    public List<?> distinct(String key) {
-        return this.mongoDao.distinct(key);
+    public List<?> distinct(String property) {
+        return this.mongoDao.distinct(property);
     }
 
-    public List<?> distinct(String key, Query query) {
+    public List<?> distinct(String property, Query query) {
         MongoQuery q = new MongoQuery(query);
-        return this.mongoDao.distinct(key, q.getQuery());
+        return this.mongoDao.distinct(property, q.getQuery());
     }
 
     public Boolean exists(Query query) {
