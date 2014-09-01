@@ -3,7 +3,6 @@ package com.despegar.integration.mongo.query;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,21 +38,15 @@ public class Query {
         POINT, POLYGON, LINE
     }
 
-    @Deprecated
-    // delete public... only static enum
-    public static enum RangeOperation {
+    static enum RangeOperation {
         IN, NOT_IN, ALL
     }
 
-    @Deprecated
-    // delete public... only static enum
-    public static enum MathOperation {
+    static enum MathOperation {
         MODULO
     }
 
-    @Deprecated
-    // delete public... only static enum
-    public static enum ComparisonOperation {
+    static enum ComparisonOperation {
         GREATER, GREATER_OR_EQUAL, LESS, LESS_OR_EQUAL, NOT_EQUAL, EXISTS
     }
 
@@ -61,11 +54,11 @@ public class Query {
         WITH_IN, INTERSECTS, NEAR, NEAR_SPHERE
     }
 
-    private Map<String, OperationWithComparison> comparisonOperators = new HashMap<String, OperationWithComparison>();
-    private Map<String, OperationWithRange> rangeOperators = new HashMap<String, OperationWithRange>();
-    private Map<String, OperationWithGeospatialFunction> geospatialOperators = new HashMap<String, OperationWithGeospatialFunction>();
-    private Map<String, OperationWithMathFunction> mathOperators = new HashMap<String, OperationWithMathFunction>();
-    private Map<String, Object> filters = new HashMap<String, Object>();
+    private Collection<OperationWithComparison> comparisonOperators = new ArrayList<OperationWithComparison>();
+    private Collection<OperationWithRange> rangeOperators = new ArrayList<OperationWithRange>();
+    private Collection<OperationWithGeospatialFunction> geospatialOperators = new ArrayList<OperationWithGeospatialFunction>();
+    private Collection<OperationWithMathFunction> mathOperators = new ArrayList<OperationWithMathFunction>();
+    private Collection<OperationEqual> filters = new ArrayList<OperationEqual>();
     private OrderedMap orderFields = new ListOrderedMap();
     private Boolean crucialDataIntegration = Boolean.FALSE;
 
@@ -78,61 +71,28 @@ public class Query {
     public Query() {
     }
 
-    @Deprecated
-    /*
-     * use equals
-     */
-    public Query put(String key, Object value) {
-
-        if (key != null) {
-            this.getFilters().put(key, value);
-        }
-
-        return this;
-    }
-
     public Query equals(String property, Object value) {
         if (property != null) {
-            this.getFilters().put(property, value);
+            this.getFilters().add(new OperationEqual(property, value));
         }
 
         return this;
     }
 
     public Query putAll(Map<String, Object> filters) {
-
-        this.getFilters().putAll(filters);
-
-        return this;
-    }
-
-    @Deprecated
-    /*
-     * use in, all or not in
-     */
-    public Query put(String key, RangeOperation operator, Collection<?> values) {
-        return this.put(key, operator, values, false);
-    }
-
-    @Deprecated
-    // this pass to private and not return
-    /*
-     * use in, all or not in
-     */
-    public Query put(String key, RangeOperation operator, Collection<?> values, boolean negation) {
-        if (values == null) {
-            return this;
-        } else if (values.size() == 1 && !negation) {
-            if (operator == RangeOperation.NOT_IN) {
-                this.put(key, ComparisonOperation.NOT_EQUAL, values.iterator().next());
-            } else {
-                this.put(key, values.iterator().next());
-            }
-
-            return this;
+        for (Map.Entry<String, Object> entry : filters.entrySet()) {
+            this.equals(entry.getKey(), entry.getValue());
         }
-        this.getRangeOperators().put(key, new OperationWithRange(operator, values, negation));
+
         return this;
+    }
+
+    private void put(String key, RangeOperation operator, Collection<?> values, boolean negation) {
+        if (key == null) {
+            return;
+        }
+
+        this.getRangeOperators().add(new OperationWithRange(key, operator, values, negation));
     }
 
     public Query in(String property, Collection<?> values) {
@@ -165,28 +125,11 @@ public class Query {
         return this;
     }
 
-    @Deprecated
-    /*
-     * use greater, greaterThan, less, lessThan, or others
-     */
-    public Query put(String key, ComparisonOperation operator, Object value) {
-        return this.put(key, operator, value, false);
-    }
-
-    @Deprecated
-    // this pass to private and not return
-    /*
-     * use greater, greaterThan, less, lessThan, or others
-     */
-    public Query put(String key, ComparisonOperation operator, Object value, boolean negation) {
-        OperationWithComparison operationWithComparison = this.getComparisonOperators().get(key);
-
-        if (operationWithComparison != null) {
-            operationWithComparison.addComparision(new OperationWithComparison(operator, value, negation));
-        } else {
-            this.getComparisonOperators().put(key, new OperationWithComparison(operator, value, negation));
+    private void put(String key, ComparisonOperation operator, Object value, boolean negation) {
+        if (key == null) {
+            return;
         }
-        return this;
+        this.getComparisonOperators().add(new OperationWithComparison(key, operator, value, negation));
     }
 
     public Query greater(String property, Object value, Boolean negation) {
@@ -244,22 +187,11 @@ public class Query {
         return this;
     }
 
-    @Deprecated
-    /*
-     * use module
-     */
-    public Query put(String key, MathOperation operator, Object value) {
-        return this.put(key, operator, value, false);
-    }
-
-    @Deprecated
-    /*
-     * use module
-     */
-    // this pass to private and not return
-    public Query put(String key, MathOperation operator, Object value, boolean negation) {
-        this.getMathOperators().put(key, new OperationWithMathFunction(operator, value, negation));
-        return this;
+    private void put(String key, MathOperation operator, Object value, Boolean negation) {
+        if (key == null) {
+            return;
+        }
+        this.getMathOperators().add(new OperationWithMathFunction(key, operator, value, negation));
     }
 
     public Query mod(String property, Integer divisor, Integer remainder, Boolean negation) {
@@ -283,8 +215,10 @@ public class Query {
     }
 
     public Query near(String property, Point point, Double maxDistance, Double minDistance) {
-        this.getGeospatialOperators().put(property,
-            new OperationGeoNearFunction(Boolean.FALSE, maxDistance, minDistance, point));
+        if (property != null) {
+            this.getGeospatialOperators().add(
+                new OperationGeoNearFunction(property, Boolean.FALSE, maxDistance, minDistance, point));
+        }
         return this;
     }
 
@@ -299,18 +233,24 @@ public class Query {
     }
 
     public Query nearSphere(String property, Point point, Double maxDistance, Double minDistance) {
-        this.getGeospatialOperators().put(property,
-            new OperationGeoNearFunction(Boolean.TRUE, maxDistance, minDistance, point));
+        if (property != null) {
+            this.getGeospatialOperators().add(
+                new OperationGeoNearFunction(property, Boolean.TRUE, maxDistance, minDistance, point));
+        }
         return this;
     }
 
     public Query within(String property, Point... points) {
-        this.getGeospatialOperators().put(property, new OperationGeoWithinFunction(points));
+        if (property != null) {
+            this.getGeospatialOperators().add(new OperationGeoWithinFunction(property, points));
+        }
         return this;
     }
 
     public Query intersect(String property, GeometryType geometryType, Point... points) {
-        this.getGeospatialOperators().put(property, new OperationGeoIntersectFunction(geometryType, points));
+        if (property != null) {
+            this.getGeospatialOperators().add(new OperationGeoIntersectFunction(property, geometryType, points));
+        }
         return this;
     }
 
@@ -354,7 +294,7 @@ public class Query {
         return this;
     }
 
-    public Map<String, Object> getFilters() {
+    public Collection<OperationEqual> getFilters() {
         return this.filters;
     }
 
@@ -362,31 +302,19 @@ public class Query {
         return this.orderFields;
     }
 
-    public Map<String, OperationWithRange> getRangeOperators() {
-        if (this.rangeOperators == null) {
-            this.rangeOperators = new HashMap<String, OperationWithRange>();
-        }
+    public Collection<OperationWithRange> getRangeOperators() {
         return this.rangeOperators;
     }
 
-    public Map<String, OperationWithMathFunction> getMathOperators() {
-        if (this.mathOperators == null) {
-            this.mathOperators = new HashMap<String, OperationWithMathFunction>();
-        }
+    public Collection<OperationWithMathFunction> getMathOperators() {
         return this.mathOperators;
     }
 
-    public Map<String, OperationWithComparison> getComparisonOperators() {
-        if (this.comparisonOperators == null) {
-            this.comparisonOperators = new HashMap<String, Query.OperationWithComparison>();
-        }
+    public Collection<OperationWithComparison> getComparisonOperators() {
         return this.comparisonOperators;
     }
 
-    public Map<String, OperationWithGeospatialFunction> getGeospatialOperators() {
-        if (this.geospatialOperators == null) {
-            this.geospatialOperators = new HashMap<String, Query.OperationWithGeospatialFunction>();
-        }
+    public Collection<OperationWithGeospatialFunction> getGeospatialOperators() {
         return this.geospatialOperators;
     }
 
@@ -411,14 +339,14 @@ public class Query {
     }
 
     public static class OperationWithComparison {
+        private String property;
         private ComparisonOperation operation;
         private Object value;
         private boolean negation;
 
-        private List<OperationWithComparison> moreComparisions = new ArrayList<Query.OperationWithComparison>();
-
-        public OperationWithComparison(ComparisonOperation operation, Object value, boolean negation) {
+        public OperationWithComparison(String property, ComparisonOperation operation, Object value, boolean negation) {
             super();
+            this.property = property;
             this.operation = operation;
             this.value = value;
             this.negation = negation;
@@ -432,27 +360,24 @@ public class Query {
             return this.value.getClass().isEnum() ? this.value.toString() : this.value;
         }
 
-        public OperationWithComparison addComparision(OperationWithComparison another) {
-            this.moreComparisions.add(another);
-            return this;
-        }
-
-        public List<OperationWithComparison> getMoreComparisions() {
-            return this.moreComparisions;
-        }
-
         public boolean isNegation() {
             return this.negation;
+        }
+
+        public String getProperty() {
+            return this.property;
         }
     }
 
     public static class OperationWithRange {
+        private String property;
         private RangeOperation rangeOperation;
         private Collection<?> values;
         private boolean negation;
 
-        public OperationWithRange(RangeOperation rangeOperation, Collection<?> values, boolean negation) {
+        public OperationWithRange(String property, RangeOperation rangeOperation, Collection<?> values, boolean negation) {
             super();
+            this.property = property;
             this.rangeOperation = rangeOperation;
             this.values = values;
             this.negation = negation;
@@ -482,15 +407,21 @@ public class Query {
             return this.negation;
         }
 
+        public String getProperty() {
+            return this.property;
+        }
+
     }
 
     public static class OperationWithMathFunction {
+        private String property;
         private MathOperation mathOperation;
         private Object values;
         private boolean negation;
 
-        public OperationWithMathFunction(MathOperation mathOperation, Object values, boolean negation) {
+        public OperationWithMathFunction(String property, MathOperation mathOperation, Object values, boolean negation) {
             super();
+            this.property = property;
             this.mathOperation = mathOperation;
             this.values = values;
             this.negation = negation;
@@ -507,21 +438,25 @@ public class Query {
         public boolean isNegation() {
             return this.negation;
         }
+
+        public String getProperty() {
+            return this.property;
+        }
     }
 
     public static class OperationGeoWithinFunction
         extends OperationWithGeospatialFunction {
 
-        private OperationGeoWithinFunction(Point... points) {
-            super(GeometryOperation.WITH_IN, GeometryType.POLYGON, points);
+        private OperationGeoWithinFunction(String property, Point... points) {
+            super(property, GeometryOperation.WITH_IN, GeometryType.POLYGON, points);
         }
     }
 
     public static class OperationGeoIntersectFunction
         extends OperationWithGeospatialFunction {
 
-        public OperationGeoIntersectFunction(GeometryType type, Point[] coordinates) {
-            super(GeometryOperation.INTERSECTS, type, coordinates);
+        public OperationGeoIntersectFunction(String property, GeometryType type, Point[] coordinates) {
+            super(property, GeometryOperation.INTERSECTS, type, coordinates);
         }
 
     }
@@ -531,8 +466,8 @@ public class Query {
         private Double maxDistance;
         private Double minDistance;
 
-        public OperationGeoNearFunction(Boolean sphere, Double maxDistance, Double minDistance, Point point) {
-            super(sphere ? GeometryOperation.NEAR_SPHERE : GeometryOperation.NEAR, GeometryType.POINT, point);
+        public OperationGeoNearFunction(String property, Boolean sphere, Double maxDistance, Double minDistance, Point point) {
+            super(property, sphere ? GeometryOperation.NEAR_SPHERE : GeometryOperation.NEAR, GeometryType.POINT, point);
             this.maxDistance = maxDistance;
             this.minDistance = minDistance;
         }
@@ -547,16 +482,15 @@ public class Query {
     }
 
     public static class OperationWithGeospatialFunction {
+        private String property;
         private GeometryOperation geometryOperation;
         private GeometryType type;
         private Point[] coordinates;
 
-        protected OperationWithGeospatialFunction() {
-
-        }
-
-        public OperationWithGeospatialFunction(GeometryOperation geometryOperation, GeometryType type, Point... coordinates) {
+        public OperationWithGeospatialFunction(String property, GeometryOperation geometryOperation, GeometryType type,
+            Point... coordinates) {
             super();
+            this.property = property;
             this.geometryOperation = geometryOperation;
             this.type = type;
             this.coordinates = coordinates;
@@ -572,6 +506,29 @@ public class Query {
 
         public Point[] getCoordinates() {
             return this.coordinates;
+        }
+
+        public String getProperty() {
+            return this.property;
+        }
+    }
+
+    public static class OperationEqual {
+        private String property;
+        private Object value;
+
+        public OperationEqual(String property, Object value) {
+            super();
+            this.property = property;
+            this.value = value;
+        }
+
+        public String getProperty() {
+            return this.property;
+        }
+
+        public Object getValue() {
+            return this.value;
         }
     }
 

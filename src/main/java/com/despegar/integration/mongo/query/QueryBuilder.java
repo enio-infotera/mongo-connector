@@ -64,7 +64,7 @@ public class QueryBuilder {
                             List<Query> sameFieldOrQueries = new ArrayList<Query>();
                             for (String splittedOrValue : value.split(Pattern.quote(DEFAULT_OPERATOR_OR))) {
                                 Query sameFieldOrQuery = new Query();
-                                sameFieldOrQuery.put(key, isLike(splittedOrValue) ? evaluateLikes(splittedOrValue)
+                                sameFieldOrQuery.equals(key, isLike(splittedOrValue) ? evaluateLikes(splittedOrValue)
                                     : splittedOrValue);
                                 sameFieldOrQueries.add(sameFieldOrQuery);
                             }
@@ -96,7 +96,7 @@ public class QueryBuilder {
         List<Query> handlerQueriesOrs = new ArrayList<Query>();
         for (String orField : orFields.keySet()) {
             Query handlerQueryOr = new Query();
-            handlerQueryOr.put(orField, orFields.get(orField));
+            handlerQueryOr.equals(orField, orFields.get(orField));
             handlerQueriesOrs.add(handlerQueryOr);
         }
         handlerQuery.andOr(handlerQueriesOrs);

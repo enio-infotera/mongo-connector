@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.collections.OrderedMapIterator;
 
@@ -13,6 +11,7 @@ import com.despegar.integration.mongo.query.Query.ComparisonOperation;
 import com.despegar.integration.mongo.query.Query.GeometryOperation;
 import com.despegar.integration.mongo.query.Query.GeometryType;
 import com.despegar.integration.mongo.query.Query.MathOperation;
+import com.despegar.integration.mongo.query.Query.OperationEqual;
 import com.despegar.integration.mongo.query.Query.OperationGeoNearFunction;
 import com.despegar.integration.mongo.query.Query.OperationWithComparison;
 import com.despegar.integration.mongo.query.Query.OperationWithGeospatialFunction;
@@ -68,22 +67,22 @@ public class MongoQuery {
     private BasicDBObject createQuery(final Query query) {
         BasicDBObject dbQuery = new BasicDBObject();
 
-        for (String key : query.getFilters().keySet()) {
+        for (OperationEqual key : query.getFilters()) {
 
-            final Object pureValue = query.getFilters().get(key);
-            final Object value = pureValue;
+            String property = key.getProperty();
+            final Object value = key.getValue();
             if (value == null) {
                 continue;
             }
 
-            if (ID_FIELD.equals(key)) {
-                key = MONGO_ID_FIELD;
+            if (ID_FIELD.equals(property)) {
+                property = MONGO_ID_FIELD;
             }
 
             if (value.getClass().isEnum()) {
-                dbQuery.append(key, value.toString());
+                dbQuery.append(property, value.toString());
             } else {
-                dbQuery.append(key, value);
+                dbQuery.append(property, value);
             }
 
         }
@@ -189,24 +188,15 @@ public class MongoQuery {
     }
 
     private BasicDBObject appendComparisionOperations(final Query query, final BasicDBObject dbQuery) {
-        final Set<Entry<String, OperationWithComparison>> comparison = query.getComparisonOperators().entrySet();
+        final Collection<OperationWithComparison> comparison = query.getComparisonOperators();
 
-        for (final Entry<String, OperationWithComparison> entry : comparison) {
-            final String key = entry.getKey();
+        for (final OperationWithComparison entry : comparison) {
+            final String key = entry.getProperty();
 
-            final List<OperationWithComparison> comparisions = new ArrayList<Query.OperationWithComparison>();
-            final OperationWithComparison operationWithComparision = entry.getValue();
-            comparisions.add(operationWithComparision);
+            BasicDBObject comparisionComponents = new BasicDBObject(this.getComparisonOperation(entry.getOperation()),
+                entry.getValue());
 
-            comparisions.addAll(operationWithComparision.getMoreComparisions());
-
-            BasicDBObject comparisionComponents = new BasicDBObject();
-            for (final OperationWithComparison eachOperation : comparisions) {
-                comparisionComponents.append(this.getComparisonOperation(eachOperation.getOperation()),
-                    eachOperation.getValue());
-            }
-
-            if (entry.getValue().isNegation()) {
+            if (entry.isNegation()) {
                 comparisionComponents = new BasicDBObject("$not", comparisionComponents);
             }
             dbQuery.append(key, comparisionComponents);
@@ -216,17 +206,17 @@ public class MongoQuery {
     }
 
     private void appendRangeOperations(final Query query, final BasicDBObject dbQuery) {
-        final Set<Entry<String, OperationWithRange>> rangeOperations = query.getRangeOperators().entrySet();
-        for (final Entry<String, OperationWithRange> entry : rangeOperations) {
-            final String key = entry.getKey();
-            final RangeOperation operation = entry.getValue().getCollectionOperation();
-            final Collection<?> values = entry.getValue().getValues();
+        final Collection<OperationWithRange> rangeOperations = query.getRangeOperators();
+        for (final OperationWithRange entry : rangeOperations) {
+            final String key = entry.getProperty();
+            final RangeOperation operation = entry.getCollectionOperation();
+            final Collection<?> values = entry.getValues();
 
             final BasicDBList list = new BasicDBList();
             list.addAll(values);
             DBObject rangeClause = new BasicDBObject(this.getRangeOperation(operation), list);
 
-            if (entry.getValue().isNegation()) {
+            if (entry.isNegation()) {
                 rangeClause = new BasicDBObject("$not", rangeClause);
             }
             dbQuery.append(key, rangeClause);
@@ -234,16 +224,16 @@ public class MongoQuery {
     }
 
     private void appendGeometryOperations(final Query query, final BasicDBObject dbQuery) {
-        final Set<Entry<String, OperationWithGeospatialFunction>> geoOperations = query.getGeospatialOperators().entrySet();
+        final Collection<OperationWithGeospatialFunction> geoOperations = query.getGeospatialOperators();
 
-        for (final Entry<String, OperationWithGeospatialFunction> entry : geoOperations) {
-            final String key = entry.getKey();
-            final GeometryOperation operation = entry.getValue().getGeometryOperation();
+        for (final OperationWithGeospatialFunction entry : geoOperations) {
+            final String key = entry.getProperty();
+            final GeometryOperation operation = entry.getGeometryOperation();
 
-            Point[] points = entry.getValue().getCoordinates();
+            Point[] points = entry.getCoordinates();
             DBObject operationObject = new BasicDBObject();
 
-            final GeometryType type = entry.getValue().getType();
+            final GeometryType type = entry.getType();
             String geometryType = this.getGeometryType(type);
 
             DBObject specifierObject = new BasicDBObject();
@@ -252,8 +242,8 @@ public class MongoQuery {
             specifierObject.put("coordinates", this.getGeometry(type, points));
             operationObject.put("$geometry", specifierObject);
 
-            if (entry.getValue() instanceof OperationGeoNearFunction) {
-                OperationGeoNearFunction operationFunction = (OperationGeoNearFunction) entry.getValue();
+            if (entry instanceof OperationGeoNearFunction) {
+                OperationGeoNearFunction operationFunction = (OperationGeoNearFunction) entry;
                 if (operationFunction.getMaxDistance() != null) {
                     operationObject.put("$maxDistance", operationFunction.getMaxDistance());
                 }
@@ -271,15 +261,15 @@ public class MongoQuery {
     }
 
     private void appendMathOperations(final Query query, final BasicDBObject dbQuery) {
-        final Set<Entry<String, OperationWithMathFunction>> mathOperations = query.getMathOperators().entrySet();
-        for (final Entry<String, OperationWithMathFunction> entry : mathOperations) {
-            final String key = entry.getKey();
-            final MathOperation operation = entry.getValue().getMathOperation();
-            final Object values = entry.getValue().getValues();
+        final Collection<OperationWithMathFunction> mathOperations = query.getMathOperators();
+        for (final OperationWithMathFunction entry : mathOperations) {
+            final String key = entry.getProperty();
+            final MathOperation operation = entry.getMathOperation();
+            final Object values = entry.getValues();
 
             DBObject mathClause = new BasicDBObject(this.getMathOperation(operation), values);
 
-            if (entry.getValue().isNegation()) {
+            if (entry.isNegation()) {
                 mathClause = new BasicDBObject("$not", mathClause);
             }
             dbQuery.append(key, mathClause);

@@ -25,20 +25,6 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         this.mongoDao = mongoDao;
     }
 
-    public <X extends Object> T get(final X id) {
-        return this.mongoDao.findOne(id);
-    }
-
-    @Deprecated
-    public T getOne() {
-        return this.findOne();
-    }
-
-    @Deprecated
-    public T getOne(final Query query) {
-        return this.findOne(query);
-    }
-
     public T findOne() {
         Query query = new Query();
         query.limit(1);
@@ -54,28 +40,6 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
 
     public <X extends Object> T findOne(final X id) {
         return this.mongoDao.findOne(id);
-    }
-
-    @Deprecated
-    public List<T> getAll() {
-        return this.find();
-    }
-
-    @Deprecated
-    public List<T> getAll(final Query query) {
-        return this.find(query);
-    }
-
-    @Deprecated
-    public List<T> getAll(final Query query, final MutableInt count) {
-        return this.find(query, count);
-    }
-
-    @Deprecated
-    public List<T> getAll(Query query, MutableInt count, Integer pagingOffset, Integer pagingLimit) {
-        query.skip(pagingOffset);
-        query.limit(pagingLimit);
-        return this.find(query, count);
     }
 
     public List<T> find() {
