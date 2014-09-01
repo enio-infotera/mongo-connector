@@ -59,6 +59,22 @@ Una vez establecida la conexion, se puede utilizar un factory de MongoCollection
    	...   
     }
 
+#### Add
+
+Para insertar registros nuevos se pueden utilizar los metodos add o save, la diferencia entre uno y otro es que el add agrega siempre un nuevo registro, mientras que el save, verifica si en el objeto que le pasamos contamos ya con un id, en caso de que lo tenga, lo buscara en la coleccion de mongo, si encuentra uno, lo pisara, en caso contrario, agregara uno nuevo
+
+       Cat firstCat = new Cat();
+       firstCat.setName("Don Gato");       
+        
+       String catId = cats.add(firstCat);
+        
+       Cat secondCat = new Cat();
+       secondCat.setAge(2);
+       secondCat.setId(catId);
+        
+       cats.save(secondCat);
+       // secondCat piso en la base a firstCat y se perdio el nombre
+
 #### Queries
 
 Para realizar queries, los metodos find del MongoCollection reciben un objeto Query, donde se debe armar la consulta que se realizara a la base de datos
@@ -79,7 +95,8 @@ A la hora de hacer una actualizacion, se debe realizar mediante el objeto Update
         update.setUpdateOperation(UpdateOperation.INC);
         update.put("age", 1);
         
-        collectionCats.update("123", update);
+        Integer n = collectionCats.update("123", update);
+        // update devuelve la cantidad de documentos actualizados
         
         Cat cat123 = collectionCats.findOne("123");
         cat123.setName("Bola de Nieve");
