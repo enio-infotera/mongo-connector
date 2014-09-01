@@ -1,6 +1,7 @@
 package com.despegar.integration.mongo.query;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
@@ -248,9 +249,7 @@ public class MongoQuery {
             DBObject specifierObject = new BasicDBObject();
             specifierObject.put("type", geometryType);
 
-            specifierObject.put("coordinates",
-                GeometryType.POINT == type ? this.getCoordenate(points[0]) : this.getCoordinates(points));
-
+            specifierObject.put("coordinates", this.getGeometry(type, points));
             operationObject.put("$geometry", specifierObject);
 
             if (entry.getValue() instanceof OperationGeoNearFunction) {
@@ -314,6 +313,19 @@ public class MongoQuery {
         }
         return null;
 
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object getGeometry(GeometryType type, Point... points) {
+        switch (type) {
+        case POINT:
+            return this.getCoordenate(points[0]);
+        case LINE:
+            return this.getCoordinates(points);
+        case POLYGON:
+            return Arrays.asList(this.getCoordinates(points));
+        }
+        return null;
     }
 
     private Collection<Double[]> getCoordinates(Point... points) {
