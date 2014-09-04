@@ -193,9 +193,9 @@ class MongoDao<T extends GenericIdentificableEntity> {
             value.setId(this.idGenerator.generateId(this.coll.getName()));
         }
 
-        WriteResult insert = this.coll.insert(this.deserialize(value), concern);
+        this.coll.insert(this.deserialize(value), concern);
 
-        return (X) insert.getUpsertedId();
+        return (X) value.getId();
     }
 
     public Integer update(DBObject query, DBObject value, boolean upsert, boolean multi, WriteConcern concern) {
