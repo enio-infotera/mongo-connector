@@ -7,7 +7,7 @@
 	</parent>
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
-	<version>1.0.8-SNAPSHOT</version>
+	<version>1.0.8</version>
 	<name>Mongo Connector</name>
 	<description>Helper component to connect to mongo fast and easy</description>
 
