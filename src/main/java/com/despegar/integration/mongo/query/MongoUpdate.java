@@ -28,9 +28,7 @@ public class MongoUpdate {
             dbUpdate.append(key, value);
         }
 
-        this.prependUpsateOperation(this.handlerUpdate, dbUpdate);
-
-        return dbUpdate;
+        return this.prependUpsateOperation(this.handlerUpdate, dbUpdate);
     }
 
     private BasicDBObject prependUpsateOperation(Update query, BasicDBObject dbUpdate) {
