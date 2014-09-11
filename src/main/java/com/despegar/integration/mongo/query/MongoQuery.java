@@ -248,7 +248,7 @@ public class MongoQuery {
                     operationObject.put("$maxDistance", operationFunction.getMaxDistance());
                 }
                 if (operationFunction.getMinDistance() != null) {
-                    operationObject.put("$minDistance", operationFunction.getMaxDistance());
+                    operationObject.put("$minDistance", operationFunction.getMinDistance());
                 }
             }
 
