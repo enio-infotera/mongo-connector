@@ -2,6 +2,7 @@ package com.despegar.integration.mongo.connector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -11,10 +12,14 @@ import org.apache.commons.lang.mutable.MutableInt;
 import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.query.QueryPage;
+import com.despegar.integration.mongo.support.DateJsonDeserializer;
+import com.despegar.integration.mongo.support.DateJsonSerializer;
 import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mongodb.AggregationOptions;
 import com.mongodb.AggregationOutput;
 import com.mongodb.BasicDBObject;
@@ -41,10 +46,11 @@ class MongoDao<T extends GenericIdentificableEntity> {
         this.mongoDb = mongoDb;
         this.clazz = clazz;
         this.idGenerator = idGenerator;
-        this.mapper = mapper;
+        this.mapper = new ObjectMapper();
 
         this.mapper.setPropertyNamingStrategy(new IdWithUnderscoreStrategy());
         this.mapper.setSerializationInclusion(Include.NON_NULL);
+        this.mapper.registerModule(getDateModule());
 
         this.coll = this.mongoDb.getCollection(collection);
     }
@@ -355,5 +361,16 @@ class MongoDao<T extends GenericIdentificableEntity> {
         JavaType constructType = this.mapper.constructType(resultClazz);
         Object convertValue = this.mapper.convertValue(o, constructType);
         return (X) convertValue;
+    }
+
+    private static SimpleModule getDateModule() {
+        // Register custom serializers
+        SimpleModule module = new SimpleModule("DateModule", new Version(0, 0, 1, null, null, null));
+
+        // Java Date
+        module.addSerializer(Date.class, new DateJsonSerializer());
+        module.addDeserializer(Date.class, new DateJsonDeserializer());
+
+        return module;
     }
 }
