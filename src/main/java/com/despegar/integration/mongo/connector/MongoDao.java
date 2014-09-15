@@ -46,7 +46,7 @@ class MongoDao<T extends GenericIdentificableEntity> {
         this.mongoDb = mongoDb;
         this.clazz = clazz;
         this.idGenerator = idGenerator;
-        this.mapper = new ObjectMapper();
+        this.mapper = mapper;
 
         this.mapper.setPropertyNamingStrategy(new IdWithUnderscoreStrategy());
         this.mapper.setSerializationInclusion(Include.NON_NULL);
