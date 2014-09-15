@@ -99,28 +99,13 @@ public class Query {
         return this;
     }
 
-    public Query in(String property, Collection<?> values, Boolean negation) {
-        this.put(property, RangeOperation.IN, values, negation);
-        return this;
-    }
-
     public Query notIn(String property, Collection<?> values) {
         this.put(property, RangeOperation.NOT_IN, values, Boolean.FALSE);
         return this;
     }
 
-    public Query notIn(String property, Collection<?> values, Boolean negation) {
-        this.put(property, RangeOperation.NOT_IN, values, negation);
-        return this;
-    }
-
     public Query all(String property, Collection<?> values) {
         this.put(property, RangeOperation.ALL, values, Boolean.FALSE);
-        return this;
-    }
-
-    public Query all(String property, Collection<?> values, Boolean negation) {
-        this.put(property, RangeOperation.ALL, values, negation);
         return this;
     }
 
@@ -131,18 +116,8 @@ public class Query {
         this.getComparisonOperators().add(new OperationWithComparison(key, operator, value, negation));
     }
 
-    public Query greater(String property, Object value, Boolean negation) {
-        this.put(property, ComparisonOperation.GREATER, value, negation);
-        return this;
-    }
-
     public Query greater(String property, Object value) {
         this.put(property, ComparisonOperation.GREATER, value, Boolean.FALSE);
-        return this;
-    }
-
-    public Query greaterOrEqual(String property, Object value, Boolean negation) {
-        this.put(property, ComparisonOperation.GREATER_OR_EQUAL, value, negation);
         return this;
     }
 
@@ -151,18 +126,8 @@ public class Query {
         return this;
     }
 
-    public Query less(String property, Object value, Boolean negation) {
-        this.put(property, ComparisonOperation.LESS, value, negation);
-        return this;
-    }
-
     public Query less(String property, Object value) {
         this.put(property, ComparisonOperation.LESS, value, Boolean.FALSE);
-        return this;
-    }
-
-    public Query lessOrEqual(String property, Object value, Boolean negation) {
-        this.put(property, ComparisonOperation.LESS_OR_EQUAL, value, negation);
         return this;
     }
 
