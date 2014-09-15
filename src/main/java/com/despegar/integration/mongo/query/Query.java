@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.apache.commons.collections.OrderedMap;
 import org.apache.commons.collections.map.ListOrderedMap;
-import org.springframework.util.Assert;
 
 public class Query {
 
@@ -271,7 +270,6 @@ public class Query {
 
     @SuppressWarnings("unchecked")
     public Query addOrderCriteria(String fieldName, OrderDirection direction) {
-        Assert.notNull(fieldName, "Field name for sorting criteria is required.");
         if (direction == null) {
             return this.addOrderCriteria(fieldName);
         }
