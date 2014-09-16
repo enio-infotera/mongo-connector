@@ -193,13 +193,20 @@ public class MongoQuery {
         for (final OperationWithComparison entry : comparison) {
             final String key = entry.getProperty();
 
-            BasicDBObject comparisionComponents = new BasicDBObject(this.getComparisonOperation(entry.getOperation()),
-                entry.getValue());
+            if (dbQuery.get(key) == null) {
+                BasicDBObject comparisionComponents = new BasicDBObject(this.getComparisonOperation(entry.getOperation()),
+                    entry.getValue());
 
-            if (entry.isNegation()) {
-                comparisionComponents = new BasicDBObject("$not", comparisionComponents);
+                // if (entry.isNegation()) {
+                // comparisionComponents = new BasicDBObject("$not", comparisionComponents);
+                // }
+
+                dbQuery.append(key, comparisionComponents);
+            } else {
+                BasicDBObject comparisionComponents = (BasicDBObject) dbQuery.get(key);
+
+                comparisionComponents.put(this.getComparisonOperation(entry.getOperation()), entry.getValue());
             }
-            dbQuery.append(key, comparisionComponents);
         }
 
         return dbQuery;

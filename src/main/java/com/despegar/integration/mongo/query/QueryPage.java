@@ -2,8 +2,6 @@ package com.despegar.integration.mongo.query;
 
 import java.io.Serializable;
 
-import org.springframework.util.Assert;
-
 public class QueryPage
     implements Serializable {
 
@@ -16,12 +14,10 @@ public class QueryPage
         if (offset == null) {
             offset = 0;
         }
-        Assert.isTrue(offset >= 0, "Offset must be equals or greater than 0");
 
         if (limit == null) {
             limit = 30;
         }
-        Assert.isTrue(limit >= 0, "Limit must be equals or greater than 0");
 
         this.offset = offset;
         this.limit = limit;

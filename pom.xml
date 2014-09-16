@@ -7,7 +7,7 @@
 	</parent>
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
-	<version>1.0.13-SNAPSHOT</version>
+	<version>1.0.17-SNAPSHOT</version>
 	<name>Mongo Connector</name>
 	<description>Helper component to connect to mongo fast and easy</description>
 
@@ -28,12 +28,6 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-beans</artifactId>
-			<version>3.0.7.RELEASE</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-collections</groupId>
