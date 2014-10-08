@@ -1,6 +1,7 @@
 package com.despegar.integration.mongo.query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,8 +10,6 @@ import com.despegar.integration.mongo.query.AggregateQuery.AggregateOperation;
 import com.despegar.integration.mongo.query.AggregateQuery.GeoNearAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.GroupAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.MatchAggregate;
-import com.despegar.integration.mongo.query.GroupQuery.GroupOperation;
-import com.despegar.integration.mongo.query.GroupQuery.OperationWithFunction;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -52,37 +51,6 @@ public class MongoAggregationQuery {
         return aggregationOperation;
     }
 
-    private String getGroupOperation(final GroupOperation operation) {
-        String groupOperation = null;
-        switch (operation) {
-        case SUM:
-            groupOperation = "$sum";
-            break;
-        case AVG:
-            groupOperation = "$avg";
-            break;
-        case MIN:
-            groupOperation = "$min";
-            break;
-        case MAX:
-            groupOperation = "$max";
-            break;
-        case PUSH:
-            groupOperation = "$push";
-            break;
-        case LAST:
-            groupOperation = "$last";
-            break;
-        case FIRST:
-            groupOperation = "$first";
-            break;
-        case ADD_TO_SET:
-            groupOperation = "$addToSet";
-            break;
-        }
-        return groupOperation;
-    }
-
     private DBObject getAggregationQuery(final Aggregate aggregation) {
         switch (aggregation.getAggregationOperation()) {
         case GEO_NEAR:
@@ -98,21 +66,32 @@ public class MongoAggregationQuery {
 
     private DBObject getGroupQuery(GroupQuery group) {
         DBObject specifierProperties = new BasicDBObject();
-        for (Map.Entry<String, OperationWithFunction> entry : group.getOperators().entrySet()) {
+        this.setGroupId(group, specifierProperties);
+        for (Map.Entry<String, Expression> entry : group.getProperties().entrySet()) {
             final String key = entry.getKey();
-            final OperationWithFunction operationWithfunction = entry.getValue();
-            final String groupOperation = this.getGroupOperation(operationWithfunction.getGroupOperation());
-
-            DBObject function = new BasicDBObject(groupOperation, operationWithfunction.getValue());
-            specifierProperties.put(key, function);
+            specifierProperties.put(key, MongoExpression.getExpressionDBObject(entry.getValue()));
         }
 
-        DBObject id = new BasicDBObject();
-        for (Map.Entry<String, String> entry : group.getId().entrySet()) {
-            id.put(entry.getKey(), entry.getValue());
-        }
-        specifierProperties.put("_id", id);
         return specifierProperties;
+    }
+
+    private void setGroupId(GroupQuery group, DBObject specifierProperties) {
+        if (group.getId() == null) {
+            return;
+        }
+
+        if (group.getId() instanceof Map) {
+            DBObject dbObject = new BasicDBObject();
+            Map<String, Object> map = (HashMap<String, Object>) group.getId();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                dbObject.put(entry.getKey(), MongoExpression.resolveObjects(entry.getValue()));
+            }
+
+            specifierProperties.put("_id", dbObject);
+            return;
+        }
+
+        specifierProperties.put("_id", MongoExpression.resolveObjects(group.getId()));
     }
 
     private DBObject getMatchQuery(Query query) {

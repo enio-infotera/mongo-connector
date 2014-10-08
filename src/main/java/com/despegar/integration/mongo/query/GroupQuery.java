@@ -5,50 +5,56 @@ import java.util.Map;
 
 public class GroupQuery {
 
-    public static enum GroupOperation {
-        SUM, AVG, FIRST, LAST, MAX, MIN, PUSH, ADD_TO_SET;
-    }
+    private Map<String, Expression> operators = new HashMap<String, Expression>();
+    private Object id;
 
-    private Map<String, OperationWithFunction> operators = new HashMap<String, OperationWithFunction>();
-    private Map<String, String> id = new HashMap<String, String>();
-
-    public GroupQuery idProperty(String key, String value) {
-        this.id.put(key, value);
+    public GroupQuery id(Expression expression) {
+        this.id = expression;
 
         return this;
     }
 
-    public GroupQuery put(String key, GroupOperation operator, Object value) {
-        this.operators.put(key, new OperationWithFunction(operator, value));
+    public GroupQuery id(String property) {
+        this.id = property;
 
         return this;
     }
 
-    public static class OperationWithFunction {
-        private GroupOperation operation;
-        private Object value;
-
-        public OperationWithFunction(GroupOperation operation, Object value) {
-            super();
-            this.operation = operation;
-            this.value = value;
+    @SuppressWarnings("unchecked")
+    public GroupQuery addToId(String name, Expression expression) {
+        if (this.id == null || !(this.id instanceof Map)) {
+            this.id = new HashMap<String, Object>();
         }
 
-        public GroupOperation getGroupOperation() {
-            return this.operation;
-        }
+        Map<String, Object> map = (HashMap<String, Object>) this.id;
+        map.put(name, expression);
 
-        public Object getValue() {
-            return this.value;
-        }
-
+        return this;
     }
 
-    public Map<String, OperationWithFunction> getOperators() {
+    @SuppressWarnings("unchecked")
+    public GroupQuery addToId(String name, String property) {
+        if (this.id == null || !(this.id instanceof Map)) {
+            this.id = new HashMap<String, Object>();
+        }
+
+        Map<String, Object> map = (HashMap<String, Object>) this.id;
+        map.put(property, property);
+
+        return this;
+    }
+
+    public GroupQuery put(String key, Expression expression) {
+        this.operators.put(key, expression);
+
+        return this;
+    }
+
+    public Map<String, Expression> getProperties() {
         return this.operators;
     }
 
-    public Map<String, String> getId() {
+    public Object getId() {
         return this.id;
     }
 
