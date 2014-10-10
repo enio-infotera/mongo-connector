@@ -228,15 +228,15 @@ public class Query {
         return this;
     }
 
-    public Query addOrderCriteria(String fieldName) {
-        return this.addOrderCriteria(fieldName, OrderDirection.ASC);
+    public Query addSort(String fieldName) {
+        return this.addSort(fieldName, OrderDirection.ASC);
 
     }
 
     @SuppressWarnings("unchecked")
-    public Query addOrderCriteria(String fieldName, OrderDirection direction) {
+    public Query addSort(String fieldName, OrderDirection direction) {
         if (direction == null) {
-            return this.addOrderCriteria(fieldName);
+            return this.addSort(fieldName);
         }
         this.orderFields.put(fieldName, direction);
         return this;

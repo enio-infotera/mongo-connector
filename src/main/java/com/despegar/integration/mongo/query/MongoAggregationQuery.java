@@ -5,11 +5,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.OrderedMapIterator;
+
 import com.despegar.integration.mongo.query.AggregateQuery.Aggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.AggregateOperation;
 import com.despegar.integration.mongo.query.AggregateQuery.GeoNearAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.GroupAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.LimitAggregate;
 import com.despegar.integration.mongo.query.AggregateQuery.MatchAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.ProjectAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.SkipAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.SortAggregate;
+import com.despegar.integration.mongo.query.AggregateQuery.UnwindAggregate;
+import com.despegar.integration.mongo.query.Query.OrderDirection;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -47,11 +55,26 @@ public class MongoAggregationQuery {
         case GROUP:
             aggregationOperation = "$group";
             break;
+        case LIMIT:
+            aggregationOperation = "$limit";
+            break;
+        case SKIP:
+            aggregationOperation = "$skip";
+            break;
+        case PROJECT:
+            aggregationOperation = "$project";
+            break;
+        case SORT:
+            aggregationOperation = "$sort";
+            break;
+        case UNWIND:
+            aggregationOperation = "$unwind";
+            break;
         }
         return aggregationOperation;
     }
 
-    private DBObject getAggregationQuery(final Aggregate aggregation) {
+    private Object getAggregationQuery(final Aggregate aggregation) {
         switch (aggregation.getAggregationOperation()) {
         case GEO_NEAR:
             return this.getGeometrySpecifiers(((GeoNearAggregate) aggregation).getGeometrySpecifier());
@@ -59,9 +82,46 @@ public class MongoAggregationQuery {
             return this.getMatchQuery(((MatchAggregate) aggregation).getQuery());
         case GROUP:
             return this.getGroupQuery(((GroupAggregate) aggregation).getGroup());
+        case LIMIT:
+            return ((LimitAggregate) aggregation).getLimit();
+        case SKIP:
+            return ((SkipAggregate) aggregation).getSkip();
+        case UNWIND:
+            return ((UnwindAggregate) aggregation).getProperty();
+        case SORT:
+            return this.getSortQuery(((SortAggregate) aggregation).getSortQuery());
+        case PROJECT:
+            return this.getProjectQuery(((ProjectAggregate) aggregation).getProjectQuery());
         }
 
         return null;
+    }
+
+    private DBObject getSortQuery(SortQuery sort) {
+        final DBObject sortInfo = new BasicDBObject(sort.getSortMap().size());
+        final OrderedMapIterator orderedMapIterator = sort.getSortMap().orderedMapIterator();
+        while (orderedMapIterator.hasNext()) {
+            final String key = (String) orderedMapIterator.next();
+            final OrderDirection orderDir = (OrderDirection) orderedMapIterator.getValue();
+            sortInfo.put(key, this.getOrderDir(orderDir));
+        }
+
+        return sortInfo;
+    }
+
+    private DBObject getProjectQuery(ProjectQuery project) {
+        final DBObject projectInfo = new BasicDBObject();
+
+        projectInfo.put("_id", project.getShowId());
+        for (String property : project.getShowProperties()) {
+            projectInfo.put(property, 1);
+        }
+
+        for (Map.Entry<String, Object> entry : project.getOperators().entrySet()) {
+            projectInfo.put(entry.getKey(), MongoExpression.resolveObjects(entry.getKey()));
+        }
+
+        return projectInfo;
     }
 
     private DBObject getGroupQuery(GroupQuery group) {
@@ -117,6 +177,19 @@ public class MongoAggregationQuery {
         if (value != null) {
             specifierProperites.put(property, value);
         }
+    }
+
+    private int getOrderDir(final OrderDirection orderDir) {
+
+        if (Query.OrderDirection.ASC.equals(orderDir)) {
+            return 1;
+        }
+
+        if (Query.OrderDirection.DESC.equals(orderDir)) {
+            return -1;
+        }
+
+        return 0;
     }
 
 

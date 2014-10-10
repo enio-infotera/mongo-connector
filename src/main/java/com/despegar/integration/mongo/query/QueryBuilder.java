@@ -78,7 +78,7 @@ public class QueryBuilder {
         }
 
         if (orderField != null) {
-            handlerQuery.addOrderCriteria(orderField, orderDirection);
+            handlerQuery.addSort(orderField, orderDirection);
         }
 
         // Gather all OR fields
