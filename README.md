@@ -125,18 +125,18 @@ El group implementa Expressions, soporta todos los tipos de expression conocidos
 
         GroupQuery gQuery = new GroupQuery();
         gQuery.addToId("type", "$type").addToId("age", "$age").put("names", Expression.push("$name"));
-
-	AggregateQuery query = new AggregateQuery();
+        
+        AggregateQuery query = new AggregateQuery();
         query.group(gQuery);
 
         Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNames.class);
 
 #### Project
 
-	ProjectQuery pQuery = new ProjectQuery();
+        ProjectQuery pQuery = new ProjectQuery();
         pQuery.show("name").hideId();
 
-	AggregateQuery query = new AggregateQuery();
+        AggregateQuery query = new AggregateQuery();
         query.group(pQuery);
 
         Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNames.class);
