@@ -5,19 +5,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.despegar.integration.mongo.query.Expression.Arithmetical;
+import com.despegar.integration.mongo.query.Expression.Array;
+import com.despegar.integration.mongo.query.Expression.Date;
+
 public class ProjectQuery {
 
     private Map<String, Object> operators = new HashMap<String, Object>();
     private List<String> showProperties = new ArrayList<String>();
     private Boolean showId = Boolean.TRUE;
 
-    public ProjectQuery put(String name, Expression expression) {
+    public ProjectQuery put(String name, Arithmetical expression) {
+        this.addExpression(name, expression);
+        return this;
+    }
+
+    public ProjectQuery put(String name, Array expression) {
+        this.addExpression(name, expression);
+        return this;
+    }
+
+    public ProjectQuery put(String name, Date expression) {
+        this.addExpression(name, expression);
+        return this;
+    }
+
+    private void addExpression(String name, Expression expression) {
         if (name == null || expression == null) {
-            return this;
+            return;
         }
         this.operators.put(name, expression);
-
-        return this;
     }
 
     public ProjectQuery put(String name, String property) {

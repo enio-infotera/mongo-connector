@@ -39,7 +39,7 @@ public class GroupQuery {
         }
 
         Map<String, Object> map = (HashMap<String, Object>) this.id;
-        map.put(property, property);
+        map.put(name, property);
 
         return this;
     }
