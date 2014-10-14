@@ -2,7 +2,7 @@
 
 Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple todas las necesidades que tengamos a la hora de comunicarnos con una base de datos mongo y utilizar sus funcionalidades. La idea es que sea un componente muy liviano y flexible, de "manufactura" local, lo que nos permite agregar nuevas funcionalidades a medida que mongo vaya agregando funciones, o modificar existentes para hacerlas aun mas simples y accesibles, a diferencia de otros frameworks como Morphia o Jongo, donde nos encontramos limitados a lo que ya se haya implementado (que hay que decirlo, no estan todas las funcionalidades de mongo implementadas en ninguno de dichos frameworks). 
 
-### Dependencia
+###} Dependencia
 
     <dependency>
       <groupId>com.despegar.integration</groupId>
@@ -15,7 +15,7 @@ Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple to
 Para utlizar el mongo-connector primero se debe instanciar un MongoDBConnection, que no es ni mas ni menos que la conexion con nuestra base de datos, indicandole el nombre de la misma, y el server (o servers) en los que se encuentra. A tener en cuenta, por ahora mongo-connector solo tiene soporte para replica set.
 Una vez establecida la conexion, se puede utilizar un factory de MongoCollection para generar la conexion con las distintas colecciones que posea nuestra base. Como dato, pasa serializar y deserializar los objetos que luego se guardaran se utiliza FasterXML, por lo que se pueden utilizar las annotations del mismo para personalizar como se guardaran y obtendran los objetos.
 
-#### Implementacion
+### Implementacion
 
     import com.despegar.integration.mongo.*;
     
@@ -103,22 +103,44 @@ A la hora de hacer una actualizacion, se debe realizar mediante el objeto Update
         
         collectionCats.save(cat123);
 
-#### Aggregation Framework (BETA)
+### Aggregation Framework (BETA)
 
-El aggregation framework es algo que estamos incluyendo en mongo connector de a poco, y a medida que se van necesitando distintas funcionalidades. Aun esta en un estado "beta", y no demasiado testeado, pero igualmente pueden utilizarlo y, de paso, ayudarnos a probarlo y sugerirnos cambios o mejoras. Por ahora solo soporta group, match y geoNear.
+El aggregation framework es algo que estamos incluyendo en mongo connector de a poco, y a medida que se van necesitando distintas funcionalidades. Aun esta en un estado "beta", y no demasiado testeado, pero igualmente pueden utilizarlo y, de paso, ayudarnos a probarlo y sugerirnos cambios o mejoras. Soporta group, project, geoNear, match, unwind, sort, skip y limit (practicamente todos los posibles), a continuacion, algunos ejemplos
 
-        GroupQuery gQuery = new GroupQuery();
-        gQuery.idProperty("type", "$type").idProperty("age", "$age");
-        gQuery.put("names", GroupOperation.PUSH, "$name");
-        
+#### Match
+
+Se realizan con el mismo objeto que las queries antes mencionadas.
+
         Query mQuery = new Query();
         mQuery.in("type", Arrays.asList("persa", "siames"));
         
         AggregateQuery query = new AggregateQuery();
         query.match(mQuery);
-        query.group(gQuery);                
         
-        Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNameList.class);
+        Collection<CatNameList> catNames = collectionCats.aggregate(query);
+
+#### Group
+
+El group implementa Expressions, soporta todos los tipos de expression conocidos de mongo (o casi)
+
+        GroupQuery gQuery = new GroupQuery();
+        gQuery.addToId("type", "$type").addToId("age", "$age").put("names", Expression.push("$name"));
+
+	AggregateQuery query = new AggregateQuery();
+        query.group(gQuery);
+
+        Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNames.class);
+
+#### Project
+
+	ProjectQuery pQuery = new ProjectQuery();
+        pQuery.show("name").hideId();
+
+	AggregateQuery query = new AggregateQuery();
+        query.group(pQuery);
+
+        Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNames.class);
+        
 
 #### Creando instancias en Spring xml
 
