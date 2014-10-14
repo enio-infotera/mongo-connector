@@ -140,11 +140,11 @@ public abstract class Expression {
         return new Set(ExpressionOperator.SET_INTERSECTION, property, expression);
     }
 
-    public static Set setIntersection(Collection<Object> list, Expression expression) {
+    public static Set setIntersection(Collection<?> list, Expression expression) {
         return new Set(ExpressionOperator.SET_INTERSECTION, list, expression);
     }
 
-    public static Set setIntersection(String property, Collection<Object> list) {
+    public static Set setIntersection(String property, Collection<?> list) {
         return new Set(ExpressionOperator.SET_INTERSECTION, list, property);
     }
 
