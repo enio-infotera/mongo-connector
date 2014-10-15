@@ -142,7 +142,7 @@ public class AggregateQuery {
     public static class UnwindAggregate
         implements Aggregate {
 
-        private AggregateOperation aggregationOperation = AggregateOperation.GROUP;
+        private AggregateOperation aggregationOperation = AggregateOperation.UNWIND;
         private String property;
 
         public UnwindAggregate(String property) {
