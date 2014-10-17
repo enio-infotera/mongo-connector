@@ -140,7 +140,8 @@ El group implementa Expressions, soporta todos los tipos de expression conocidos
         query.group(pQuery);
 
         Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNames.class);
-        
+
+Tener en cuenta que todo lo relacionado a aggregation (al menos con nuestro framework) **solo funciona con mongodb 2.6 en adelante**. Desconocemos que pasa si se utiliza con una version menor del mismo, pero desde ya, utilizamos aggregate con cursores, algo que se agrego en dicha version de mongo.
 
 #### Creando instancias en Spring xml
 
