@@ -119,18 +119,18 @@ public class MongoCollection<T extends GenericIdentificableEntity<?>> {
         this.mongoDao.dropCollection(this.collectionName);
     }
 
-    /*
+    /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this
+     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
      */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
         return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery());
     }
 
-    /*
+    /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this
+     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);

@@ -3,7 +3,6 @@ package com.despegar.integration.mongo.connector;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +20,8 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mongodb.AggregationOptions;
-import com.mongodb.AggregationOutput;
+import com.mongodb.AggregationOptions.Builder;
+import com.mongodb.AggregationOptions.OutputMode;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Cursor;
 import com.mongodb.DB;
@@ -321,24 +321,11 @@ class MongoDao<T extends GenericIdentificableEntity> {
         return this.aggregate(pipeline, this.coll.getReadPreference(), this.clazz);
     }
 
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options, Class<X> resultClazz) {
-        return this.aggregate(pipeline, options, this.coll.getReadPreference(), resultClazz);
-    }
-
     public <X extends Object> List<X> aggregate(List<DBObject> pipeline, ReadPreference readPreference, Class<X> resultClazz) {
-        AggregationOutput aggregationOutput = this.coll.aggregate(pipeline, readPreference);
-        Iterable<DBObject> results = aggregationOutput.results();
-        Iterator<DBObject> iterator = results.iterator();
-        List<X> ret = new ArrayList<X>();
-        while (iterator.hasNext()) {
-            ret.add(this.serialize(iterator.next(), resultClazz));
-        }
-        return ret;
-    }
+        Builder builder = AggregationOptions.builder();
+        builder.outputMode(OutputMode.CURSOR);
 
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options,
-        ReadPreference readPreference, Class<X> resultClazz) {
-        Cursor cursor = this.coll.aggregate(pipeline, options, readPreference);
+        Cursor cursor = this.coll.aggregate(pipeline, builder.build(), readPreference);
 
         List<X> ret = new ArrayList<X>();
         while (cursor.hasNext()) {
