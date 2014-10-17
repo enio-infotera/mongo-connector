@@ -7,7 +7,7 @@ Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple to
     <dependency>
       <groupId>com.despegar.integration</groupId>
       <artifactId>mongo-connector</artifactId>
-      <version>1.0.16</version>
+      <version>1.1.0</version>
     </dependency>
 
 ### Getting started...
