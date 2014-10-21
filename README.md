@@ -2,14 +2,6 @@
 
 Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple todas las necesidades que tengamos a la hora de comunicarnos con una base de datos mongo y utilizar sus funcionalidades. La idea es que sea un componente muy liviano y flexible, de "manufactura" local, lo que nos permite agregar nuevas funcionalidades a medida que mongo vaya agregando funciones, o modificar existentes para hacerlas aun mas simples y accesibles, a diferencia de otros frameworks como Morphia o Jongo, donde nos encontramos limitados a lo que ya se haya implementado (que hay que decirlo, no estan todas las funcionalidades de mongo implementadas en ninguno de dichos frameworks). 
 
-###} Dependencia
-
-    <dependency>
-      <groupId>com.despegar.integration</groupId>
-      <artifactId>mongo-connector</artifactId>
-      <version>1.1.0</version>
-    </dependency>
-
 ### Getting started...
 
 Para utlizar el mongo-connector primero se debe instanciar un MongoDBConnection, que no es ni mas ni menos que la conexion con nuestra base de datos, indicandole el nombre de la misma, y el server (o servers) en los que se encuentra. A tener en cuenta, por ahora mongo-connector solo tiene soporte para replica set.
