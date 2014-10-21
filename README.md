@@ -1,3 +1,5 @@
+// TODO: This will be translated to English soon
+
 # Mongo-Connector V1 (o V2, si contamos la 0)
 
 Esta nueva versión del Mongo-Connector intenta resolver de manera muy simple todas las necesidades que tengamos a la hora de comunicarnos con una base de datos mongo y utilizar sus funcionalidades. La idea es que sea un componente muy liviano y flexible, de "manufactura" local, lo que nos permite agregar nuevas funcionalidades a medida que mongo vaya agregando funciones, o modificar existentes para hacerlas aun mas simples y accesibles, a diferencia de otros frameworks como Morphia o Jongo, donde nos encontramos limitados a lo que ya se haya implementado (que hay que decirlo, no estan todas las funcionalidades de mongo implementadas en ninguno de dichos frameworks). 
