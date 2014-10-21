@@ -135,6 +135,7 @@ public class MongoAggregationQuery {
         return specifierProperties;
     }
 
+    @SuppressWarnings("unchecked")
     private void setGroupId(GroupQuery group, DBObject specifierProperties) {
         if (group.getId() == null) {
             return;

@@ -1,22 +1,28 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<artifactId>scm-master-pom</artifactId>
-		<groupId>com.despegar.scm</groupId>
-		<version>1.0.7</version>
-	</parent>
+	
+	<modelVersion>4.0.0</modelVersion>	
+	
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
 	<version>1.0.17-SNAPSHOT</version>
+	
 	<name>Mongo Connector</name>
 	<description>Helper component to connect to mongo fast and easy</description>
-
-
-	<scm>
-		<connection>scm:git:git@gitlab.despegar.it:java-library/mongo-connector.git</connection>
-		<developerConnection>scm:git:git@gitlab.despegar.it:java-library/mongo-connector.git</developerConnection>
-		<url>scm:git:git@gitlab.despegar.it:java-library/mongo-connector.git</url>
-	</scm>
+	
+	<developers>
+		<developer>
+			<name>Gustavo Paoli</name>			
+			<email>gpaoli@despegar.com</email>
+		</developer>
+		<developer>
+			<name>Mariano Longo</name>			
+			<email>mflongo@despegar.com</email>
+		</developer>
+		<developer>
+			<name>Mariano Cibelli</name>			
+			<email>mcibelli@despegar.com</email>
+		</developer>
+	</developers>
 
 	<properties>
 		<mongodb.version>2.12.3</mongodb.version>
