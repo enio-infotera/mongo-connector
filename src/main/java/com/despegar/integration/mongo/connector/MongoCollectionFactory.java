@@ -2,7 +2,7 @@ package com.despegar.integration.mongo.connector;
 
 import java.net.UnknownHostException;
 
-import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
+import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.id.StringIdGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,14 +20,14 @@ public class MongoCollectionFactory {
     private ObjectMapper mapper;
     private MongoDBConnection mongoDBConnection;
 
-    public <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
+    public <T extends GenericIdentifiableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
         Class<T> clazz) throws UnknownHostException {
         MongoDao<T> mongoDao = new MongoDao<T>(this.mongoDBConnection.getDB(), collection, this.mapper, clazz,
             this.idGenerator);
         return new MongoCollection<T>(collection, clazz, mongoDao);
     }
 
-    public static <T extends GenericIdentificableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
+    public static <T extends GenericIdentifiableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
         Class<T> clazz, MongoDBConnection mongoDBConnection, IdGenerator<?> idGenerator, ObjectMapper mapper)
         throws UnknownHostException {
 

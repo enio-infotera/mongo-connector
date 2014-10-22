@@ -1,6 +1,6 @@
 package com.despegar.integration.mongo.entities;
 
-public interface GenericIdentificableEntity<Type> {
+public interface GenericIdentifiableEntity<Type> {
 
     Type getId();
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang.mutable.MutableInt;
 
-import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
+import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.query.AggregateQuery;
 import com.despegar.integration.mongo.query.MongoAggregationQuery;
 import com.despegar.integration.mongo.query.MongoQuery;
@@ -13,7 +13,7 @@ import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.Update;
 import com.mongodb.ReadPreference;
 
-public class MongoCollection<T extends GenericIdentificableEntity<?>> {
+public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;

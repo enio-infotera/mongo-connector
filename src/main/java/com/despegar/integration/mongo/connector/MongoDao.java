@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.mutable.MutableInt;
 
-import com.despegar.integration.mongo.entities.GenericIdentificableEntity;
+import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.query.QueryPage;
 import com.despegar.integration.mongo.support.DateJsonDeserializer;
@@ -33,7 +33,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 
 @SuppressWarnings("rawtypes")
-class MongoDao<T extends GenericIdentificableEntity> {
+class MongoDao<T extends GenericIdentifiableEntity> {
 
     private DB mongoDb;
     private Class<T> clazz;
