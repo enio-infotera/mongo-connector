@@ -11,6 +11,7 @@ import com.despegar.integration.mongo.query.MongoQuery;
 import com.despegar.integration.mongo.query.MongoUpdate;
 import com.despegar.integration.mongo.query.Query;
 import com.despegar.integration.mongo.query.Update;
+import com.mongodb.AggregationOptions;
 import com.mongodb.ReadPreference;
 
 public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
@@ -121,7 +122,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * this framework, but you can test this.
      */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -130,11 +131,20 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * this framework, but you can test this.
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
         return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), returnClazz);
+    }
+
+    /**
+     * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
+     * this framework, but you can test this.
+     */
+    public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
+        MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
+        return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), options, returnClazz);
     }
 
     public List<?> distinct(String property) {

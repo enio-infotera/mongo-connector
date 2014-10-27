@@ -3,6 +3,7 @@ package com.despegar.integration.mongo.connector;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +24,6 @@ import com.mongodb.AggregationOptions;
 import com.mongodb.AggregationOptions.Builder;
 import com.mongodb.AggregationOptions.OutputMode;
 import com.mongodb.BasicDBObject;
-import com.mongodb.Cursor;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -324,12 +324,25 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     public <X extends Object> List<X> aggregate(List<DBObject> pipeline, ReadPreference readPreference, Class<X> resultClazz) {
         Builder builder = AggregationOptions.builder();
         builder.outputMode(OutputMode.CURSOR);
+        return this.aggregate(pipeline, builder.build(), readPreference, resultClazz);
+    }
 
-        Cursor cursor = this.coll.aggregate(pipeline, builder.build(), readPreference);
+    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options, Class<X> resultClazz) {
+        return this.aggregate(pipeline, options, this.coll.getReadPreference(), resultClazz);
+    }
+
+    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options,
+        ReadPreference readPreference, Class<X> resultClazz) {
+        Iterator<DBObject> iterator;
+        if (AggregationOptions.OutputMode.INLINE.equals(options.getOutputMode())) {
+            iterator = this.coll.aggregate(pipeline, readPreference).results().iterator();
+        } else {
+            iterator = this.coll.aggregate(pipeline, options, readPreference);
+        }
 
         List<X> ret = new ArrayList<X>();
-        while (cursor.hasNext()) {
-            ret.add(this.serialize(cursor.next(), resultClazz));
+        while (iterator.hasNext()) {
+            ret.add(this.serialize(iterator.next(), resultClazz));
         }
 
         return ret;
