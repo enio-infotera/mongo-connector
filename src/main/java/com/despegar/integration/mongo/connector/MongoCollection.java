@@ -122,7 +122,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this.
+     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
      */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -131,7 +131,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this.
+     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -140,7 +140,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this.
+     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
