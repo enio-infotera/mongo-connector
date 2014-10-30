@@ -1,32 +1,57 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	
-	<modelVersion>4.0.0</modelVersion>	
-	
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
 	<version>1.1.1-SNAPSHOT</version>
-	
+	<packaging>jar</packaging>
+
 	<name>Mongo Connector</name>
 	<description>Helper component to connect to mongo fast and easy</description>
-	
+	<url>https://github.com/despegar/mongo-connector</url>
+
 	<developers>
 		<developer>
-			<name>Gustavo Paoli</name>			
+			<name>Gustavo Paoli</name>
 			<email>gpaoli@despegar.com</email>
 		</developer>
 		<developer>
-			<name>Mariano Longo</name>			
+			<name>Mariano Longo</name>
 			<email>mflongo@despegar.com</email>
 		</developer>
 		<developer>
-			<name>Mariano Cibelli</name>			
+			<name>Mariano Cibelli</name>
 			<email>mcibelli@despegar.com</email>
+		</developer>
+		<developer>
+			<name>Agustin Marseillan</name>
+			<email>amarseillan@despegar.com</email>
 		</developer>
 	</developers>
 
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+		</license>
+	</licenses>
+
+	<scm>
+		<connection>scm:git:git@github.com:despegar/mongo-connector.git</connection>
+		<developerConnection>scm:git:git@github.com:despegar/mongo-connector.git</developerConnection>
+		<url>https://github.com/despegar/mongo-connector</url>
+	</scm>
+
 	<properties>
 		<mongodb.version>2.12.3</mongodb.version>
-		<fasterxml.version>2.4.1.3</fasterxml.version>		
+		<fasterxml.version>2.4.1.3</fasterxml.version>
 	</properties>
 
 	<dependencies>
@@ -41,14 +66,14 @@
 			<version>3.2.1</version>
 		</dependency>
 		<dependency>
-		    <groupId>com.fasterxml.jackson.core</groupId>
-		    <artifactId>jackson-databind</artifactId>
-		    <version>${fasterxml.version}</version>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${fasterxml.version}</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.mongodb</groupId>
-		    <artifactId>mongo-java-driver</artifactId>
-		    <version>${mongodb.version}</version>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongo-java-driver</artifactId>
+			<version>${mongodb.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -66,4 +91,34 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
