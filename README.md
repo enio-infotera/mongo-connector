@@ -3,6 +3,16 @@ Mongo-Connector
 
 Lightweight connector to [MongoDB](http://www.mongodb.org/).
 
+##Dependency
+
+```xml
+<dependency>
+	<groupId>com.despegar.integration</groupId>
+	<artifactId>mongo-connector</artifactId>
+	<version>1.1.1</version>
+</dependency>
+```
+
 
 ###Getting started
 
