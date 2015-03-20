@@ -214,6 +214,10 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return this.update(query, value, upsert, WriteConcern.SAFE);
     }
 
+    public Integer update(BasicDBObject query, BasicDBObject value, boolean upsert, boolean multi) {
+        return this.update(query, value, upsert, multi, WriteConcern.SAFE);
+    }
+
     public Integer update(DBObject query, DBObject value, boolean upsert, WriteConcern concern) {
         return this.update(query, value, upsert, false, concern);
     }

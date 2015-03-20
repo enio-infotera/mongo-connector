@@ -91,6 +91,12 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
     }
 
+    public <X extends Object> Integer update(final Query query, final Update updateQuery, final boolean multi) {
+        final MongoQuery mongoQuery = new MongoQuery(query);
+        final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
+        return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false, multi);
+    }
+
     public <X extends Object> Integer update(final X id, final Update updateQuery) {
         Query query = new Query();
         query.equals("_id", id);
