@@ -19,7 +19,8 @@ public class Update {
     public Update put(String property, Object value) {
 
         if (property != null) {
-            this.getProperties().put(property, value);
+        	Object convertedValue = value instanceof Enum ? value.toString() : value;
+            this.getProperties().put(property, convertedValue);
         }
 
         return this;

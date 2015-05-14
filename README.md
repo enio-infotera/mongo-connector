@@ -147,3 +147,70 @@ query.group(pQuery);
 
 Collection<CatNameList> catNames = collectionCats.aggregate(query, CatNames.class);
 ```
+
+### Bulk Operations (BETA) (Supports Mongo 2.6 or greater)
+
+### Creation and execution
+```java
+//Here you instantiate a bulk object to load everything you want to run
+Bulk<T> yourBulkOperation = new Bulk<T>();
+//Here you execute your already loaded bulk
+yourMongoCollection.bulk(yourBulkOperation);
+```
+
+### Insert
+You can add inserts to your bulk.
+
+```java
+T entity = new T();
+yourBulkOperation.insert(entity);
+```
+
+### Remove
+You can remove objects given a query.
+
+```java
+Query yourQuery = new Query();
+//Here you query the objects you would like to remove
+yourBulkOperation.find(yourQuery).remove();
+```
+
+### Remove One
+You can remove the first result of a query.
+
+```java
+Query yourQuery = new Query();
+//Here you query the object you would like to remove
+yourBulkOperation.find(yourQuery).removeOne();
+
+### Replace One
+You can replace the first result of a query.
+
+```java
+Query yourQuery = new Query();
+//Here you query the objects you would like to replace
+T yourEntityToReplace = new T();
+yourBulkOperation.find(yourQuery).replaceOne(yourEntityToReplace);
+```
+
+### Update
+You can update results of a query.
+
+```java
+Query yourQuery = new Query();
+//Here you query the objects you would like to update
+Update update = new Update();
+//Here you load your updates
+yourBulkOperation.find(yourQuery).update(update);
+```
+
+### Update One
+You can update the first result of a query.
+
+```java
+Query yourQuery = new Query();
+//Here you query the objects you would like to update
+Update update = new Update();
+//Here you load your updates
+yourBulkOperation.find(yourQuery).updateOne(update);
+```
