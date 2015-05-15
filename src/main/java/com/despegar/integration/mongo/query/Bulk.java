@@ -13,12 +13,19 @@ public class Bulk<T extends GenericIdentifiableEntity<?>>{
 	private Boolean orderRequired = Boolean.FALSE; 
 	
 	public Bulk<T> insert(List<T> entities){
-		this.operationsList.addAll(entities);
+		List<BulkInsert<T>> listToInsert = new ArrayList<BulkInsert<T>>();
+		BulkInsert<T> entityToInsert;
+		for(T entity:entities){
+			entityToInsert = new BulkInsert<T>(entity);
+			listToInsert.add(entityToInsert);
+		}
+		this.operationsList.addAll(listToInsert);
 		return this;
 	}
 	
 	public Bulk<T> insert(T entity){
-		this.operationsList.add(entity);
+		BulkInsert<T> entityToInsert = new BulkInsert<T>(entity);
+		this.operationsList.add(entityToInsert);
 		return this;
 	}
 	

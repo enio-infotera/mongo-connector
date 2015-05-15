@@ -1,6 +1,6 @@
 package com.despegar.integration.mongo.entities;
 
-public interface GenericIdentifiableEntity<Type> extends Bulkeable {
+public interface GenericIdentifiableEntity<Type>{
 
     Type getId();
 
