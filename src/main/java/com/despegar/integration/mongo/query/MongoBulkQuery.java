@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.despegar.integration.mongo.entities.Bulkeable;
-import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
-import com.despegar.integration.mongo.query.BulkFind.BulkFindOperation;
+import com.despegar.integration.mongo.query.BulkOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
@@ -18,7 +17,7 @@ public class MongoBulkQuery {
 	@SuppressWarnings("rawtypes")
 	private Bulk bulk;
 	
-	class BulkUpdateOperation implements BulkOperation{
+	class BulkUpdateOperation implements BulkOperable{
 		private DBObject query;
 		private DBObject update;
 		
@@ -32,7 +31,7 @@ public class MongoBulkQuery {
 		}
 	}
 	
-	class BulkUpdateOneOperation implements BulkOperation{
+	class BulkUpdateOneOperation implements BulkOperable{
 		private DBObject query;
 		private DBObject update;
 		
@@ -46,7 +45,7 @@ public class MongoBulkQuery {
 		}
 	}
 	
-	class BulkReplaceOneOperation implements BulkOperation{
+	class BulkReplaceOneOperation implements BulkOperable{
 		private DBObject query;
 		private Object o;
 		
@@ -61,7 +60,7 @@ public class MongoBulkQuery {
 		}
 	}
 	
-	class BulkRemoveOperation implements BulkOperation {
+	class BulkRemoveOperation implements BulkOperable {
 		private DBObject query;
 		
 		public BulkRemoveOperation(DBObject query) {
@@ -74,7 +73,7 @@ public class MongoBulkQuery {
 		}
 	}
 	
-	class BulkRemoveOneOperation implements BulkOperation {
+	class BulkRemoveOneOperation implements BulkOperable {
 		private DBObject query;
 		
 		public BulkRemoveOneOperation(DBObject query) {
@@ -87,7 +86,7 @@ public class MongoBulkQuery {
 		}
 	}
 	
-	class BulkInsertOperation implements BulkOperation {
+	class BulkInsertOperation implements BulkOperable {
 		private Object o;
 		
 		public BulkInsertOperation(Object o) {
@@ -101,7 +100,7 @@ public class MongoBulkQuery {
 		}
 	}
 	
-	public interface BulkOperation {
+	public interface BulkOperable {
 		void addTo(BulkWriteOperation bulk, ObjectMapper mapper);
 	}
 	
@@ -110,17 +109,13 @@ public class MongoBulkQuery {
 		this.bulk = bulk;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public List<BulkOperation> getOperations(){
-		List<BulkOperation> operationList = new ArrayList<BulkOperation>();
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<BulkOperable> getOperations(){
+		List<BulkOperable> operationList = new ArrayList<BulkOperable>();
 		List<Bulkeable> bulkList = bulk.getOperationsList();
-		for(Bulkeable a:bulkList){
-			if(a instanceof GenericIdentifiableEntity){
-	            BulkInsertOperation insertInstance = new BulkInsertOperation(a);
-	            operationList.add(insertInstance);
-			}else{
-				BulkFind<?> find = (BulkFind<?>) a; 
-				BulkFindOperation operation = find.getOperation();
+		for(Bulkeable bulkeable:bulkList){
+				BulkOperation operation = bulkeable.getOperation();
+				BulkFind find = !BulkOperation.INSERT.equals(bulkeable.getOperation()) ? (BulkFind) bulkeable : null;
 		        switch (operation) {
 		        case REMOVE:
 		        	BasicDBObject removeQuery = new MongoQuery(find.getQuery()).getQuery();
@@ -149,9 +144,12 @@ public class MongoBulkQuery {
 		            BulkReplaceOneOperation replaceOneInstance = new BulkReplaceOneOperation(replaceFindOneQuery,find.getEntity());
 		            operationList.add(replaceOneInstance);
 		            break;
+				case INSERT:
+					BulkInsertOperation bulkInsertOperation = new BulkInsertOperation(((BulkInsert) bulkeable).getEntity());
+					operationList.add(bulkInsertOperation);
+					break;
 		        }
 			}
-		}
 		return operationList;
 	}
 	

@@ -2,21 +2,14 @@ package com.despegar.integration.mongo.query;
 
 import com.despegar.integration.mongo.entities.Bulkeable;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
+import com.despegar.integration.mongo.query.BulkOperation;
 
 public class BulkFind<T extends GenericIdentifiableEntity<?>> implements Bulkeable{
 	
 	private Query query;
-	private BulkFindOperation operation;
+	private BulkOperation operation;
 	private Update update;
 	private T entity;
-	
-	enum BulkFindOperation{
-		REMOVE,
-		UPDATE,
-		REMOVE_ONE,
-		REPLACE_ONE,
-		UPDATE_ONE;
-	}
 	
 	public BulkFind(Query query){
 		this.query = query;
@@ -24,34 +17,35 @@ public class BulkFind<T extends GenericIdentifiableEntity<?>> implements Bulkeab
 	
 	
 	public void remove(){
-		this.operation = BulkFindOperation.REMOVE;
+		this.operation = BulkOperation.REMOVE;
 	}
 	
 	public void update(Update update){
 		this.update = update;
-		this.operation = BulkFindOperation.UPDATE;
+		this.operation = BulkOperation.UPDATE;
 	}
 	
 	public void removeOne(){
-		this.operation = BulkFindOperation.REMOVE_ONE;
+		this.operation = BulkOperation.REMOVE_ONE;
 	}
 	
 	public void updateOne(Update update){
 		this.update = update;
-		this.operation = BulkFindOperation.UPDATE_ONE;
+		this.operation = BulkOperation.UPDATE_ONE;
 	}
 	
 	public void replaceOne(T entity){
 		this.entity = entity;
-		this.operation = BulkFindOperation.REPLACE_ONE;
+		this.operation = BulkOperation.REPLACE_ONE;
 	}
 	
 	public Query getQuery() {
 		return query;
 	}
 
-
-	public BulkFindOperation getOperation() {
+	
+	@Override
+	public BulkOperation getOperation() {
 		return operation;
 	}
 

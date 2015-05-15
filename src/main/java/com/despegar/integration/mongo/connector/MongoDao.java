@@ -9,13 +9,11 @@ import java.util.Set;
 
 import org.apache.commons.lang.mutable.MutableInt;
 
+import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
-import com.despegar.integration.mongo.query.Bulk;
-import com.despegar.integration.mongo.query.BulkFind;
-import com.despegar.integration.mongo.query.MongoBulkQuery;
+import com.despegar.integration.mongo.query.MongoBulkQuery.BulkOperable;
 import com.despegar.integration.mongo.query.QueryPage;
-import com.despegar.integration.mongo.query.MongoBulkQuery.BulkOperation;
 import com.despegar.integration.mongo.support.DateJsonDeserializer;
 import com.despegar.integration.mongo.support.DateJsonSerializer;
 import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
@@ -29,6 +27,7 @@ import com.mongodb.AggregationOptions.Builder;
 import com.mongodb.AggregationOptions.OutputMode;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
+import com.mongodb.BulkWriteResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -357,7 +356,7 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return ret;
     }
     
-    public void bulk(List<BulkOperation> operations, Boolean isOrderRequired){
+    public BulkResult bulk(List<BulkOperable> operations, Boolean isOrderRequired){
     	BulkWriteOperation bulk;
     	if(isOrderRequired){
     		bulk = coll.initializeOrderedBulkOperation();
@@ -365,11 +364,13 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     		bulk = coll.initializeUnorderedBulkOperation();
     	}
     	
-    	for (BulkOperation bulkOperation : operations) {
+    	for (BulkOperable bulkOperation : operations) {
 			bulkOperation.addTo(bulk, this.mapper);
 		}
     	
-    	bulk.execute();
+    	BulkWriteResult result = bulk.execute();
+    	BulkResult response = new BulkResult(result.getModifiedCount(), result.getRemovedCount(), result.getInsertedCount());
+    	return response;
     }
 
     private T serialize(DBObject o) {

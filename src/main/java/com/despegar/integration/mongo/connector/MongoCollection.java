@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang.mutable.MutableInt;
 
+import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.query.AggregateQuery;
 import com.despegar.integration.mongo.query.Bulk;
@@ -169,9 +170,9 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         return this.mongoDao.exists(q.getQuery());
     }
     
-    public void bulk(Bulk<T> bulk) {
+    public BulkResult bulk(Bulk<T> bulk) {
         MongoBulkQuery bulkQuery = new MongoBulkQuery(bulk);
-        mongoDao.bulk(bulkQuery.getOperations(), bulk.getOrderRequired());
+        return mongoDao.bulk(bulkQuery.getOperations(), bulk.getOrderRequired());
     }
 
     private ReadPreference isCrucialDataIntegration(Query query) {
