@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mongodb.DB;
-import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
@@ -31,6 +30,7 @@ public class MongoDBConnection {
 
     private DB db;
 
+    @SuppressWarnings("deprecation")
     private void instanceDB() throws UnknownHostException {
         if (this.mongoOptions == null) {
             this.mongoOptions = MongoClientOptions.builder().build();
@@ -44,7 +44,8 @@ public class MongoDBConnection {
             serverAddress = new ServerAddress(split[0], new Integer(split[1]));
             serverAddresses.add(serverAddress);
         }
-        Mongo mongo = new MongoClient(serverAddresses, this.mongoOptions);
+
+        MongoClient mongo = new MongoClient(serverAddresses, this.mongoOptions);
         this.db = mongo.getDB(this.dbName);
 
     }

@@ -153,28 +153,32 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, MutableInt count,
         ReadPreference readPreference) {
         DBCursor cursor = this.coll.find(query, fields);
-
-        if (count != null) {
-            count.setValue(cursor.count());
-        }
-
-        if (sortInfo != null) {
-            cursor = cursor.sort(sortInfo);
-        }
-
-        if (readPreference != null) {
-            cursor.setReadPreference(readPreference);
-        }
-
-        if (page != null) {
-            cursor = cursor.skip(page.getOffset());
-            cursor = cursor.limit(page.getLimit());
-        }
-
         List<T> ret = new ArrayList<T>();
-        while (cursor.hasNext()) {
-            DBObject next = cursor.next();
-            ret.add(this.serialize(next));
+
+        try {
+            if (count != null) {
+                count.setValue(cursor.count());
+            }
+
+            if (sortInfo != null) {
+                cursor = cursor.sort(sortInfo);
+            }
+
+            if (readPreference != null) {
+                cursor.setReadPreference(readPreference);
+            }
+
+            if (page != null) {
+                cursor = cursor.skip(page.getOffset());
+                cursor = cursor.limit(page.getLimit());
+            }
+
+            while (cursor.hasNext()) {
+                DBObject next = cursor.next();
+                ret.add(this.serialize(next));
+            }
+        } finally {
+            cursor.close();
         }
 
         return ret;
@@ -355,22 +359,22 @@ class MongoDao<T extends GenericIdentifiableEntity> {
 
         return ret;
     }
-    
-    public BulkResult bulk(List<BulkOperable> operations, Boolean isOrderRequired){
-    	BulkWriteOperation bulk;
-    	if(isOrderRequired){
-    		bulk = coll.initializeOrderedBulkOperation();
-    	}else{
-    		bulk = coll.initializeUnorderedBulkOperation();
-    	}
-    	
-    	for (BulkOperable bulkOperation : operations) {
-			bulkOperation.addTo(bulk, this.mapper);
-		}
-    	
-    	BulkWriteResult result = bulk.execute();
-    	BulkResult response = new BulkResult(result.getModifiedCount(), result.getRemovedCount(), result.getInsertedCount());
-    	return response;
+
+    public BulkResult bulk(List<BulkOperable> operations, Boolean isOrderRequired) {
+        BulkWriteOperation bulk;
+        if (isOrderRequired) {
+            bulk = this.coll.initializeOrderedBulkOperation();
+        } else {
+            bulk = this.coll.initializeUnorderedBulkOperation();
+        }
+
+        for (BulkOperable bulkOperation : operations) {
+            bulkOperation.addTo(bulk, this.mapper);
+        }
+
+        BulkWriteResult result = bulk.execute();
+        BulkResult response = new BulkResult(result.getModifiedCount(), result.getRemovedCount(), result.getInsertedCount());
+        return response;
     }
 
     private T serialize(DBObject o) {

@@ -44,7 +44,7 @@
 	</scm>
 
 	<properties>
-		<mongodb.version>2.12.3</mongodb.version>
+		<mongodb.version>3.0.2</mongodb.version>
 		<fasterxml.version>2.3.0</fasterxml.version>
 	</properties>
 
