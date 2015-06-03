@@ -1,36 +1,48 @@
-package com.despegar.integration.mongo.query;
+package com.despegar.integration.mongo.connector;
 
 import java.util.Collection;
 
-public abstract class Expression {
+import org.bson.BsonDocument;
+import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
+
+public abstract class Expression
+    implements Bson {
 
     static enum ExpressionOperator {
-        CONDITIONAL,
-        MULTIPLY,
-        ADD,
-        DIVIDE,
-        SUBTRACT,
-        GREAT_THAN_EQUAL,
-        GREAT_THAN,
-        LESS_THAN,
-        LESS_THAN_EQUAL,
-        EQUAL,
-        NON_EQUAL,
-        SIZE,
-        AVG,
-        FIRST,
-        LAST,
-        SUM,
-        PUSH,
-        ADD_TO_SET,
-        MAX,
-        MIN,
-        HOUR,
-        MINUTES,
-        YEAR,
-        MONTH,
-        DAY,
-        SET_INTERSECTION
+        CONDITIONAL("$cond"),
+        MULTIPLY("$multiply"),
+        ADD("$add"),
+        DIVIDE("$divide"),
+        SUBTRACT("$subtract"),
+        GREAT_THAN_EQUAL("$gte"),
+        GREAT_THAN("$gt"),
+        LESS_THAN("$lt"),
+        LESS_THAN_EQUAL("$lte"),
+        EQUAL("$eq"),
+        NON_EQUAL("$ne"),
+        SIZE("$size"),
+        AVG("$avg"),
+        FIRST("$first"),
+        LAST("$last"),
+        SUM("$sum"),
+        PUSH("$push"),
+        ADD_TO_SET("$addToSet"),
+        MAX("$max"),
+        MIN("$min"),
+        HOUR("$hour"),
+        MINUTES("$minute"),
+        YEAR("$year"),
+        MONTH("$month"),
+        DAY("$dayOfMonth"),
+        SET_INTERSECTION("$setIntersection");
+
+        private String operator;
+
+        ExpressionOperator(String operator) {
+            this.operator = operator;
+        }
     };
 
     protected ExpressionOperator operator;
@@ -70,6 +82,10 @@ public abstract class Expression {
 
     public static Comparison lessThanEqual(Object value1, Object value2) {
         return new Comparison(ExpressionOperator.LESS_THAN_EQUAL, value1, value2);
+    }
+
+    public static Comparison lessThan(Object value1, Object value2) {
+        return new Comparison(ExpressionOperator.LESS_THAN, value1, value2);
     }
 
     public static Comparison equal(Object value1, Object value2) {
@@ -155,6 +171,11 @@ public abstract class Expression {
             this.operator = op;
             this.parameters = operators;
         }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+        }
     }
 
     static class Comparison
@@ -163,6 +184,11 @@ public abstract class Expression {
         public Comparison(ExpressionOperator op, Object value1, Object value2) {
             this.operator = op;
             this.parameters = new Object[] {value1, value2};
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
         }
     }
 
@@ -173,6 +199,11 @@ public abstract class Expression {
             this.operator = op;
             this.parameters = new Object[] {i, then, els};
         }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+        }
     }
 
     static class Array
@@ -182,14 +213,31 @@ public abstract class Expression {
             this.operator = op;
             this.parameters = new Object[] {expression};
         }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+        }
     }
 
     static class Accumulators
         extends Expression {
 
+        private Object expression;
+
         public Accumulators(ExpressionOperator op, Object expression) {
             this.operator = op;
-            this.parameters = new Object[] {expression};
+            this.expression = expression;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            if (this.expression instanceof Expression) {
+                return new Document(this.operator.operator, ((Expression) this.expression).toBsonDocument(documentClass,
+                    codecRegistry)).toBsonDocument(documentClass, codecRegistry);
+            } else {
+                return new Document(this.operator.operator, this.expression).toBsonDocument(documentClass, codecRegistry);
+            }
         }
     }
 
@@ -200,6 +248,11 @@ public abstract class Expression {
             this.operator = op;
             this.parameters = new Object[] {expression};
         }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+        }
     }
 
     static class Set
@@ -208,6 +261,11 @@ public abstract class Expression {
         public Set(ExpressionOperator op, Object list1, Object list2) {
             this.operator = op;
             this.parameters = new Object[] {list1, list2};
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
+            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
         }
     }
 

@@ -4,10 +4,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
 
 public class MongoDBConnection {
 
@@ -28,9 +28,8 @@ public class MongoDBConnection {
         this.instanceDB();
     }
 
-    private DB db;
+    private MongoDatabase db;
 
-    @SuppressWarnings("deprecation")
     private void instanceDB() throws UnknownHostException {
         if (this.mongoOptions == null) {
             this.mongoOptions = MongoClientOptions.builder().build();
@@ -45,12 +44,10 @@ public class MongoDBConnection {
             serverAddresses.add(serverAddress);
         }
 
-        MongoClient mongo = new MongoClient(serverAddresses, this.mongoOptions);
-        this.db = mongo.getDB(this.dbName);
-
+        this.db = new MongoClient(serverAddresses, this.mongoOptions).getDatabase(this.dbName);
     }
 
-    DB getDB() {
+    MongoDatabase getDB() {
         return this.db;
     }
 }

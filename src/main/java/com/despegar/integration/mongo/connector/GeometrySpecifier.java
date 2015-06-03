@@ -1,7 +1,7 @@
-package com.despegar.integration.mongo.query;
+package com.despegar.integration.mongo.connector;
 
 
-public class GeometrySpecifierQuery {
+public class GeometrySpecifier {
     private Double[] near;
     private String distanceField;
     private Integer limit;
@@ -48,47 +48,47 @@ public class GeometrySpecifierQuery {
         return this.uniqueDocs;
     }
 
-    public GeometrySpecifierQuery setNear(Double[] coordinates) {
+    public GeometrySpecifier setNear(Double[] coordinates) {
         this.near = coordinates;
         return this;
     }
 
-    public GeometrySpecifierQuery setDistanceField(String distanceField) {
+    public GeometrySpecifier setDistanceField(String distanceField) {
         this.distanceField = distanceField;
         return this;
     }
 
-    public GeometrySpecifierQuery setLimit(Integer limit) {
+    public GeometrySpecifier setLimit(Integer limit) {
         this.limit = limit;
         return this;
     }
 
-    public GeometrySpecifierQuery setNum(Integer num) {
+    public GeometrySpecifier setNum(Integer num) {
         this.num = num;
         return this;
     }
 
-    public GeometrySpecifierQuery setMaxDistance(Double maxDistance) {
+    public GeometrySpecifier setMaxDistance(Double maxDistance) {
         this.maxDistance = maxDistance;
         return this;
     }
 
-    public GeometrySpecifierQuery setSpherical(boolean spherical) {
+    public GeometrySpecifier setSpherical(boolean spherical) {
         this.spherical = spherical;
         return this;
     }
 
-    public GeometrySpecifierQuery setDistanceMultiplier(Double distanceMultiplier) {
+    public GeometrySpecifier setDistanceMultiplier(Double distanceMultiplier) {
         this.distanceMultiplier = distanceMultiplier;
         return this;
     }
 
-    public GeometrySpecifierQuery setIncludeLocs(String includeLocs) {
+    public GeometrySpecifier setIncludeLocs(String includeLocs) {
         this.includeLocs = includeLocs;
         return this;
     }
 
-    public GeometrySpecifierQuery setUniqueDocs(boolean uniqueDocs) {
+    public GeometrySpecifier setUniqueDocs(boolean uniqueDocs) {
         this.uniqueDocs = uniqueDocs;
         return this;
     }

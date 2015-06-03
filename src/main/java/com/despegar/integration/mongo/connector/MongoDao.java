@@ -3,17 +3,16 @@ package com.despegar.integration.mongo.connector;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang.mutable.MutableInt;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
+import com.despegar.integration.mongo.connector.Bulk.BulkOperation;
 import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
-import com.despegar.integration.mongo.query.MongoBulkQuery.BulkOperable;
-import com.despegar.integration.mongo.query.QueryPage;
 import com.despegar.integration.mongo.support.DateJsonDeserializer;
 import com.despegar.integration.mongo.support.DateJsonSerializer;
 import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
@@ -22,69 +21,42 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.mongodb.AggregationOptions;
-import com.mongodb.AggregationOptions.Builder;
-import com.mongodb.AggregationOptions.OutputMode;
 import com.mongodb.BasicDBObject;
-import com.mongodb.BulkWriteOperation;
-import com.mongodb.BulkWriteResult;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.DistinctIterable;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 @SuppressWarnings("rawtypes")
 class MongoDao<T extends GenericIdentifiableEntity> {
 
-    private DB mongoDb;
-    private Class<T> clazz;
-    private DBCollection coll;
+    private com.mongodb.client.MongoCollection<Document> coll;
     private IdGenerator idGenerator;
+    private Class<T> clazz;
     private ObjectMapper mapper;
 
-    MongoDao(DB mongoDb, String collection, ObjectMapper mapper, Class<T> clazz, IdGenerator idGenerator)
+    MongoDao(MongoDatabase mongoDb, String collection, Class<T> clazz, ObjectMapper mapper, IdGenerator idGenerator)
         throws UnknownHostException {
-        this.mongoDb = mongoDb;
-        this.clazz = clazz;
         this.idGenerator = idGenerator;
+        this.clazz = clazz;
         this.mapper = mapper;
 
         this.mapper.setPropertyNamingStrategy(new IdWithUnderscoreStrategy());
         this.mapper.setSerializationInclusion(Include.NON_NULL);
         this.mapper.registerModule(getDateModule());
 
-        this.coll = this.mongoDb.getCollection(collection);
+        this.coll = mongoDb.getCollection(collection);
     }
 
-    public T findOne() {
-        return this.findOne(new BasicDBObject());
-    }
-
-    public T findOne(ReadPreference readPreference) {
-        return this.findOne(new BasicDBObject(), readPreference);
-    }
-
-    public T findOne(DBObject query) {
-        return this.findOne(query, new BasicDBObject(), new QueryPage(0, 1));
-    }
-
-    public T findOne(DBObject query, ReadPreference readPreference) {
-        return this.findOne(query, new BasicDBObject(), new QueryPage(0, 1), readPreference);
-    }
-
-    public T findOne(DBObject query, DBObject sortInfo, QueryPage page) {
-        List<T> list = this.find(query, new BasicDBObject(), sortInfo, page);
-        if (list != null && !list.isEmpty()) {
-            return list.get(0);
-        }
-        return null;
-    }
-
-    public T findOne(DBObject query, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
-        List<T> list = this.find(query, new BasicDBObject(), sortInfo, page, readPreference);
+    public T findOne(Bson query, Bson sortInfo, Integer limit, Integer skip) {
+        List<T> list = this.find(query, null, sortInfo, limit, skip, null);
         if (list != null && !list.isEmpty()) {
             return list.get(0);
         }
@@ -94,312 +66,199 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     public <X extends Object> T findOne(X id) {
         BasicDBObject o = new BasicDBObject();
         o.append("_id", id);
-        DBObject dbObject = this.coll.findOne(o);
-        return this.serialize(dbObject);
+        return this.serialize(this.coll.find(Filters.eq("_id", id)).first());
     }
 
-    public List<T> find() {
-        return this.find(new BasicDBObject());
-    }
+    public List<T> find(Bson query, Bson fields, Bson sortInfo, Integer limit, Integer skip, MutableInt count) {
+        FindIterable<Document> cursor = this.coll.find();
 
-    public List<T> find(ReadPreference readPreference) {
-        return this.find(new BasicDBObject(), readPreference);
-    }
+        if (query != null) {
+            cursor.filter(query);
+        }
 
-    public List<T> find(DBObject query) {
-        return this.find(query, new BasicDBObject());
-    }
+        if (fields != null) {
+            cursor.projection(fields);
+        }
 
-    public List<T> find(DBObject query, ReadPreference readPreference) {
-        return this.find(query, new BasicDBObject(), readPreference);
-    }
+        // TODO y el size?
+        // if (count != null) {
+        // count.setValue(cursor.);
+        // }
 
-    public List<T> find(DBObject query, DBObject fields) {
-        return this.findUsingSortInfo(query, fields, null);
-    }
+        if (sortInfo != null) {
+            cursor = cursor.sort(sortInfo);
+        }
 
-    public List<T> find(DBObject query, DBObject fields, ReadPreference readPreference) {
-        return this.findUsingSortInfo(query, fields, null, readPreference);
-    }
+        // TODO no existe mas la posibilidad de cambiar el read preference
 
-    public List<T> findUsingSortInfo(DBObject query, DBObject fields, DBObject sortInfo) {
-        return this.find(query, fields, sortInfo, null);
-    }
+        if (skip != null) {
+            cursor = cursor.skip(skip);
+        }
 
-    public List<T> findUsingSortInfo(DBObject query, DBObject fields, DBObject sortInfo, ReadPreference readPreference) {
-        return this.find(query, fields, sortInfo, null, readPreference);
-    }
+        if (limit != null) {
+            cursor = cursor.limit(limit);
+        }
 
-    public List<T> findUsingPage(DBObject query, DBObject fields, QueryPage page) {
-        return this.find(query, fields, null, page);
-    }
-
-    public List<T> findUsingPage(DBObject query, DBObject fields, QueryPage page, ReadPreference readPreference) {
-        return this.find(query, fields, null, page, readPreference);
-    }
-
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page) {
-        return this.find(query, fields, sortInfo, page, null, this.coll.getReadPreference());
-    }
-
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
-        return this.find(query, fields, sortInfo, page, null, readPreference);
-    }
-
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, MutableInt count) {
-        return this.find(query, fields, sortInfo, page, count, this.coll.getReadPreference());
-    }
-
-    public List<T> find(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, MutableInt count,
-        ReadPreference readPreference) {
-        DBCursor cursor = this.coll.find(query, fields);
         List<T> ret = new ArrayList<T>();
-
+        MongoCursor<Document> iterator = cursor.iterator();
         try {
-            if (count != null) {
-                count.setValue(cursor.count());
-            }
-
-            if (sortInfo != null) {
-                cursor = cursor.sort(sortInfo);
-            }
-
-            if (readPreference != null) {
-                cursor.setReadPreference(readPreference);
-            }
-
-            if (page != null) {
-                cursor = cursor.skip(page.getOffset());
-                cursor = cursor.limit(page.getLimit());
-            }
-
-            while (cursor.hasNext()) {
-                DBObject next = cursor.next();
-                ret.add(this.serialize(next));
+            while (iterator.hasNext()) {
+                T next = this.serialize(iterator.next());
+                ret.add(next);
             }
         } finally {
-            cursor.close();
+            iterator.close();
         }
 
         return ret;
     }
 
-    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
-        boolean returnNew, boolean upsert) {
-        return this.serialize(this.coll.findAndModify(query, fields, sort, remove, update, returnNew, upsert));
-    }
+    // TODO no existe mas
+    // public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
+    // boolean returnNew, boolean upsert) {
+    // return this.serialize(this.coll.findAndModify(query, fields, sort, remove, update, returnNew, upsert));
+    // }
 
-    public List<?> distinct(String key) {
-        return this.coll.distinct(key);
-    }
+    public <X> List<X> distinct(String key, Bson query, Class<X> clazz) {
+        DistinctIterable<X> iterable = this.coll.distinct(key, clazz);
+        if (query != null) {
+            iterable.filter(query);
+        }
 
-    public List<?> distinct(String key, DBObject query) {
-        return this.coll.distinct(key, query);
-    }
+        this.coll.find(Filters.and(Filters.eq("name", "algo"), Filters.exists("pepe"))).skip(10).limit(10);
 
-    public <X extends Object> X insert(T value) {
-        return this.insert(value, WriteConcern.NORMAL);
+        List<X> ret = new ArrayList<X>();
+        MongoCursor<X> iterator = iterable.iterator();
+        try {
+            while (iterator.hasNext()) {
+                X next = iterator.next();
+                ret.add(next);
+            }
+        } finally {
+            iterator.close();
+        }
+
+        return ret;
     }
 
     @SuppressWarnings("unchecked")
-    public <X extends Object> X insert(T value, WriteConcern concern) {
+    public <X extends Object> X insert(T value) {
         if (!this.idGenerator.validateId(value.getId())) {
-            value.setId(this.idGenerator.generateId(this.coll.getName()));
+            // TODO get collection name?
+            value.setId(this.idGenerator.generateId(null));
         }
 
-        this.coll.insert(this.deserialize(value), concern);
-
+        this.coll.insertOne(this.deserialize(value));
         return (X) value.getId();
     }
 
-    public Integer update(DBObject query, DBObject value, boolean upsert, boolean multi, WriteConcern concern) {
-        WriteResult update = this.coll.update(query, value, upsert, multi, concern);
+    public Long update(Bson query, Bson value, Boolean upsert, Boolean multi) {
+        UpdateOptions up = new UpdateOptions();
+        up.upsert(upsert);
 
-        return update.getN();
-    }
-
-    public Integer update(BasicDBObject query, BasicDBObject value, boolean upsert) {
-        return this.update(query, value, upsert, WriteConcern.SAFE);
-    }
-
-    public Integer update(BasicDBObject query, BasicDBObject value, boolean upsert, boolean multi) {
-        return this.update(query, value, upsert, multi, WriteConcern.SAFE);
-    }
-
-    public Integer update(DBObject query, DBObject value, boolean upsert, WriteConcern concern) {
-        return this.update(query, value, upsert, false, concern);
-    }
-
-    public Integer update(DBObject query, DBObject value, WriteConcern concern) {
-        return this.update(query, value, false, false, concern);
-    }
-
-    public Integer update(T query, T value, boolean upsert, boolean multi, WriteConcern concern) {
-        WriteResult update = this.coll.update(this.deserialize(query), this.deserialize(value), upsert, multi, concern);
-
-        return update.getN();
-    }
-
-    public Integer update(T query, T value, boolean upsert) {
-        return this.update(query, value, upsert, WriteConcern.SAFE);
-    }
-
-    public Integer update(T query, T value, boolean upsert, WriteConcern concern) {
-        return this.update(query, value, upsert, false, concern);
-    }
-
-    public Integer update(T query, T value, WriteConcern concern) {
-        return this.update(query, value, false, false, concern);
-    }
-
-    private <X extends Object> X updateById(X id, T value) {
-        DBObject o = new BasicDBObject();
-        o.put("_id", id);
-        this.coll.update(o, this.deserialize(value));
-
-        return id;
-    }
-
-    public <X extends Object> X updateOrInsert(T value) {
-        return this.updateOrInsert(value, WriteConcern.SAFE);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <X extends Object> X updateOrInsert(T value, WriteConcern concern) {
-        X ret = null;
-        if (!this.idGenerator.validateId(value.getId()) || this.findOne(value.getId()) == null) {
-            if (value.getId() != null) {
-                this.idGenerator.updateId(this.coll.getName(), value.getId());
-            }
-            ret = this.insert(value, concern);
-
+        UpdateResult ur = null;
+        if (multi) {
+            ur = this.coll.updateMany(query, value, up);
         } else {
-            ret = (X) this.updateById(value.getId(), value);
+            ur = this.coll.updateOne(query, value, up);
         }
 
-        return ret;
+        return ur.getModifiedCount();
     }
 
-    public int getTotalObjectsInCollection(String collection) {
-        return this.getTotalObjectsInCollection(collection, new BasicDBObject());
+    public <X extends Object> Boolean updateById(X id, Bson value) {
+        UpdateResult ur = this.coll.updateOne(Filters.eq("_id", id), value);
+        return (ur.getModifiedCount() == 1L);
     }
 
-    public int getTotalObjectsInCollection(String collection, DBObject key) {
-        return this.coll.find(key).count();
+    // TODO updateOrInsert muere, debido a que no se van a aceptar mas save o update por objeto completo
+
+    public Long collectionSize() {
+        return this.coll.count();
     }
 
-    public Set<String> getCollectionNames() {
-        return this.mongoDb.getCollectionNames();
+    public Long collectionSize(Bson query) {
+        return this.coll.count(query);
     }
 
-    public void dropCollection(String collection) {
-        DBCollection coll = this.mongoDb.getCollection(collection);
-        coll.drop();
-    }
+    // TODO drop y rename collection ya no se van a poder hacer desde mongo-connector
 
-    public void renameCollection(String collection, String newName) {
-        this.renameCollection(collection, newName, false);
-    }
-
-    public void renameCollection(String collection, String newName, Boolean dropTarget) {
-        DBCollection coll = this.mongoDb.getCollection(collection);
-        coll.rename(newName, dropTarget);
-    }
-
-    public boolean delete(String collection, DBObject query) {
-        DBCollection coll = this.mongoDb.getCollection(collection);
-        return coll.remove(query).isUpdateOfExisting();
-    }
-
-    public <X extends Object> boolean delete(String collection, X id) {
-        return this.delete(collection, new BasicDBObject("_id", id));
-    }
-
-    public void ensureIndex(String collection, DBObject index) {
-        DBCollection coll = this.mongoDb.getCollection(collection);
-        coll.createIndex(index);
-    }
-
-    public boolean exists(DBObject query) {
-        DBCursor cursor = this.coll.find(query).limit(1);
-        return cursor.hasNext();
-    }
-
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, Class<X> resultClazz) {
-        return this.aggregate(pipeline, this.coll.getReadPreference(), resultClazz);
-    }
-
-    public List<T> aggregate(List<DBObject> pipeline) {
-        return this.aggregate(pipeline, this.coll.getReadPreference(), this.clazz);
-    }
-
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, ReadPreference readPreference, Class<X> resultClazz) {
-        Builder builder = AggregationOptions.builder();
-        builder.outputMode(OutputMode.CURSOR);
-        return this.aggregate(pipeline, builder.build(), readPreference, resultClazz);
-    }
-
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options, Class<X> resultClazz) {
-        return this.aggregate(pipeline, options, this.coll.getReadPreference(), resultClazz);
-    }
-
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, AggregationOptions options,
-        ReadPreference readPreference, Class<X> resultClazz) {
-        Iterator<DBObject> iterator;
-        if (AggregationOptions.OutputMode.INLINE.equals(options.getOutputMode())) {
-            iterator = this.coll.aggregate(pipeline, readPreference).results().iterator();
+    public Long delete(Bson query, Boolean multi) {
+        DeleteResult dr = null;
+        if (multi) {
+            dr = this.coll.deleteMany(query);
         } else {
-            iterator = this.coll.aggregate(pipeline, options, readPreference);
+            dr = this.coll.deleteOne(query);
         }
+        return dr.getDeletedCount();
+    }
 
+    public <X extends Object> Boolean delete(X id) {
+        DeleteResult dr = this.coll.deleteOne(Filters.eq("_id", id));
+        return (dr.getDeletedCount() == 1L);
+    }
+
+    // TODO no se pueden crear indices desde codigo
+
+    public Boolean exists(Bson query) {
+        FindIterable<Document> iterable = this.coll.find(query).limit(1);
+        return (iterable.first() != null);
+    }
+
+    public <X extends Object> List<X> aggregate(List<Bson> pipeline, Class<X> resultClazz) {
+        MongoCursor<Document> cursor = this.coll.aggregate(pipeline).useCursor(Boolean.TRUE).iterator();
         List<X> ret = new ArrayList<X>();
-        while (iterator.hasNext()) {
-            ret.add(this.serialize(iterator.next(), resultClazz));
+        while (cursor.hasNext()) {
+            ret.add(this.serialize(cursor.next(), resultClazz));
         }
 
         return ret;
     }
 
-    public BulkResult bulk(List<BulkOperable> operations, Boolean isOrderRequired) {
-        BulkWriteOperation bulk;
-        if (isOrderRequired) {
-            bulk = this.coll.initializeOrderedBulkOperation();
-        } else {
-            bulk = this.coll.initializeUnorderedBulkOperation();
+    public List<T> aggregate(List<Bson> pipeline) {
+        MongoCursor<Document> cursor = this.coll.aggregate(pipeline).useCursor(Boolean.TRUE).iterator();
+        List<T> ret = new ArrayList<T>();
+        while (cursor.hasNext()) {
+            ret.add(this.serialize(cursor.next()));
         }
 
-        for (BulkOperable bulkOperation : operations) {
-            bulkOperation.addTo(bulk, this.mapper);
-        }
+        return ret;
+    }
 
-        BulkWriteResult result = bulk.execute();
-        BulkResult response = new BulkResult(result.getModifiedCount(), result.getRemovedCount(), result.getInsertedCount());
+    public BulkResult bulk(List<BulkOperation> operations, Boolean isOrderRequired) {
+        BulkWriteOptions bo = new BulkWriteOptions();
+        bo.ordered(isOrderRequired);
+        List<WriteModel<Document>> writes = new ArrayList<WriteModel<Document>>();
+        for (BulkOperation op : operations) {
+            writes.add(op.getWriteModel(this.mapper));
+        }
+        BulkWriteResult br = this.coll.bulkWrite(writes, bo);
+
+        BulkResult response = new BulkResult(br.getModifiedCount(), br.getDeletedCount(), br.getInsertedCount());
         return response;
     }
 
-    private T serialize(DBObject o) {
+    private T serialize(Document o) {
         return this.serialize(o, this.clazz);
     }
 
-    private DBObject deserialize(T o) {
-        return this.mapper.convertValue(o, BasicDBObject.class);
+    private Document deserialize(T o) {
+        return this.mapper.convertValue(o, Document.class);
     }
 
     @SuppressWarnings("unchecked")
-    private <X extends Object> X serialize(DBObject o, Class<X> resultClazz) {
+    private <X extends Object> X serialize(Document o, Class<X> resultClazz) {
         JavaType constructType = this.mapper.constructType(resultClazz);
         Object convertValue = this.mapper.convertValue(o, constructType);
         return (X) convertValue;
     }
 
     private static SimpleModule getDateModule() {
-        // Register custom serializers
         SimpleModule module = new SimpleModule("DateModule", new Version(0, 0, 1, null, null, null));
-
-        // Java Date
         module.addSerializer(Date.class, new DateJsonSerializer());
         module.addDeserializer(Date.class, new DateJsonDeserializer());
 
         return module;
     }
+
 }

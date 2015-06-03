@@ -6,26 +6,12 @@ import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
-import com.despegar.integration.mongo.query.AggregateQuery;
-import com.despegar.integration.mongo.query.Bulk;
-import com.despegar.integration.mongo.query.MongoAggregationQuery;
-import com.despegar.integration.mongo.query.MongoBulkQuery;
-import com.despegar.integration.mongo.query.MongoQuery;
-import com.despegar.integration.mongo.query.MongoUpdate;
-import com.despegar.integration.mongo.query.Query;
-import com.despegar.integration.mongo.query.Update;
-import com.mongodb.AggregationOptions;
-import com.mongodb.ReadPreference;
 
 public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
-    protected Class<T> clazz;
-    private String collectionName;
     protected MongoDao<T> mongoDao;
 
-    MongoCollection(String collectionName, Class<T> collectionClass, MongoDao<T> mongoDao) {
-        this.collectionName = collectionName;
-        this.clazz = collectionClass;
+    MongoCollection(MongoDao<T> mongoDao) {
         this.mongoDao = mongoDao;
     }
 
@@ -36,10 +22,8 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         return this.findOne(query);
     }
 
-    public T findOne(final Query query) {
-        final MongoQuery mhq = new MongoQuery(query);
-
-        return this.mongoDao.findOne(mhq.getQuery(), mhq.getSortInfo(), mhq.getQueryPage());
+    public T findOne(Query query) {
+        return this.mongoDao.findOne(query.match(), query.sort(), query.limit(), query.skip());
     }
 
     public <X extends Object> T findOne(final X id) {
@@ -57,130 +41,76 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     public List<T> find(final Query query, final MutableInt count) {
 
         if (query == null) {
-            return this.mongoDao.find();
+            return this.mongoDao.find(null, null, null, null, null, null);
         }
 
-        final MongoQuery mongoQuery = new MongoQuery(query);
-
-        return this.mongoDao.find(mongoQuery.getQuery(), null, mongoQuery.getSortInfo(), mongoQuery.getQueryPage(), count,
-            this.isCrucialDataIntegration(query));
+        return this.mongoDao.find(query.match(), null, query.sort(), null, null, count);
     }
 
-    public Integer count(final Query query) {
+    public Long count(final Match query) {
         if (query == null) {
-            return this.mongoDao.getTotalObjectsInCollection(this.collectionName);
+            return this.mongoDao.collectionSize();
         }
 
-        final MongoQuery mongoQuery = new MongoQuery(query);
-        return this.mongoDao.getTotalObjectsInCollection(this.collectionName, mongoQuery.getQuery());
+        // TODO dejar un query?
+        return this.mongoDao.collectionSize(query);
     }
 
-    public <X extends Object> X add(final T t) {
+    public <X> X add(final T t) {
         t.setId(null);
         return this.mongoDao.insert(t);
     }
 
-    public <X extends Object> X insertIfNotPresent(final T t) {
-        return this.mongoDao.insert(t);
+    // TODO no hay mas save, ni insertIfNotPresent
+
+    public Long update(final Match query, final Update updateQuery) {
+        return this.update(query, updateQuery, Boolean.FALSE);
     }
 
-    public <X extends Object> X save(final T t) {
-        return this.mongoDao.updateOrInsert(t);
+    public Long update(final Match query, final Update updateQuery, final Boolean multi) {
+        return this.mongoDao.update(query, updateQuery, Boolean.FALSE, multi);
     }
 
-    public <X extends Object> Integer update(final Query query, final Update updateQuery) {
-        final MongoQuery mongoQuery = new MongoQuery(query);
-        final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
-        return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
+    public <X> Boolean update(final X id, final Update updateQuery) {
+        return this.mongoDao.updateById(id, updateQuery);
     }
 
-    public <X extends Object> Integer update(final Query query, final Update updateQuery, final boolean multi) {
-        final MongoQuery mongoQuery = new MongoQuery(query);
-        final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
-        return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false, multi);
+    // TODO findAndModify no existe mas
+
+    public <X> Boolean remove(final X id) {
+        return this.mongoDao.delete(id);
     }
 
-    public <X extends Object> Integer update(final X id, final Update updateQuery) {
-        Query query = new Query();
-        query.equals("_id", id);
-        final MongoQuery mongoQuery = new MongoQuery(query);
-        final MongoUpdate mongoUpdateQuery = new MongoUpdate(updateQuery);
-        return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
+    public Boolean remove(Match query) {
+        return this.mongoDao.delete(query);
     }
 
-    public T getAndUpdate(final Query query, boolean remove, final Update updateQuery, boolean returnNew) {
-        MongoQuery mhq = new MongoQuery(query);
-        MongoUpdate mhqUpdate = new MongoUpdate(updateQuery);
+    // TODO no hay mas drop
 
-        return this.mongoDao.findAndModify(mhq.getQuery(), null, mhq.getSortInfo(), remove, mhqUpdate.getUpdate(),
-            returnNew, false);
+    public List<T> aggregate(Aggregate query) {
+        return this.mongoDao.aggregate(query.piplines());
     }
 
-    public <X extends Object> boolean remove(final X id) {
-        return this.mongoDao.delete(this.collectionName, id);
+    public <Y> List<Y> aggregate(Aggregate query, Class<Y> returnClazz) {
+        return this.mongoDao.aggregate(query.piplines(), returnClazz);
     }
 
-    public boolean remove(Query query) {
-        final MongoQuery mongoQuery = new MongoQuery(query);
-        return this.mongoDao.delete(this.collectionName, mongoQuery.getQuery());
+    // TODO no hay mas aggregate options
+
+    public <Y> List<Y> distinct(String property, Class<Y> returnClazz) {
+        return this.distinct(property, null, returnClazz);
     }
 
-    public void removeAll() {
-        this.mongoDao.dropCollection(this.collectionName);
-    }
-
-    /**
-     * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
-     */
-    public List<T> aggregate(AggregateQuery query) {
-        MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
-        return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery());
-    }
-
-    /**
-     * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
-     */
-    public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
-        MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
-        return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), returnClazz);
-    }
-
-    /**
-     * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
-     * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
-     */
-    public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
-        MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
-        return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), options, returnClazz);
-    }
-
-    public List<?> distinct(String property) {
-        return this.mongoDao.distinct(property);
-    }
-
-    public List<?> distinct(String property, Query query) {
-        MongoQuery q = new MongoQuery(query);
-        return this.mongoDao.distinct(property, q.getQuery());
+    public <Y> List<Y> distinct(String property, Match query, Class<Y> returnClazz) {
+        return this.mongoDao.distinct(property, query, returnClazz);
     }
 
     public Boolean exists(Query query) {
-        MongoQuery q = new MongoQuery(query);
-        return this.mongoDao.exists(q.getQuery());
+        return this.mongoDao.exists(query.match());
     }
-    
+
     public BulkResult bulk(Bulk<T> bulk) {
-        MongoBulkQuery bulkQuery = new MongoBulkQuery(bulk);
-        return mongoDao.bulk(bulkQuery.getOperations(), bulk.getOrderRequired());
-    }
-
-    private ReadPreference isCrucialDataIntegration(Query query) {
-        if (query.isCrucialDataIntegration()) {
-            return ReadPreference.primary();
-        }
-
-        return null;
+        return this.mongoDao.bulk(bulk.operations(), bulk.isOrderRequired());
     }
 
 }

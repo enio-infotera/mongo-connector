@@ -11,36 +11,35 @@ public class MongoCollectionFactory {
 
     public MongoCollectionFactory(MongoDBConnection mongoDBConnection) {
         this.mongoDBConnection = mongoDBConnection;
-
-        this.idGenerator = new StringIdGenerator();
         this.mapper = new ObjectMapper();
+        this.idGenerator = new StringIdGenerator();
     }
 
     private IdGenerator<?> idGenerator;
-    private ObjectMapper mapper;
     private MongoDBConnection mongoDBConnection;
+    private ObjectMapper mapper;
 
-    public <T extends GenericIdentifiableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
-        Class<T> clazz) throws UnknownHostException {
-        MongoDao<T> mongoDao = new MongoDao<T>(this.mongoDBConnection.getDB(), collection, this.mapper, clazz,
+    public <T extends GenericIdentifiableEntity<?>> MongoCollection<T> buildMongoCollection(String collection, Class<T> clazz)
+        throws UnknownHostException {
+        MongoDao<T> mongoDao = new MongoDao<T>(this.mongoDBConnection.getDB(), collection, clazz, this.mapper,
             this.idGenerator);
-        return new MongoCollection<T>(collection, clazz, mongoDao);
+        return new MongoCollection<T>(mongoDao);
     }
 
     public static <T extends GenericIdentifiableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
         Class<T> clazz, MongoDBConnection mongoDBConnection, IdGenerator<?> idGenerator, ObjectMapper mapper)
         throws UnknownHostException {
 
-        MongoDao<T> mongoDao = new MongoDao<T>(mongoDBConnection.getDB(), collection, mapper, clazz, idGenerator);
-        return new MongoCollection<T>(collection, clazz, mongoDao);
-    }
-
-    public void setIdGenerator(IdGenerator<?> idGenerator) {
-        this.idGenerator = idGenerator;
+        MongoDao<T> mongoDao = new MongoDao<T>(mongoDBConnection.getDB(), collection, clazz, mapper, idGenerator);
+        return new MongoCollection<T>(mongoDao);
     }
 
     public void setMapper(ObjectMapper mapper) {
         this.mapper = mapper;
+    }
+
+    public void setIdGenerator(IdGenerator<?> idGenerator) {
+        this.idGenerator = idGenerator;
     }
 
 }
