@@ -2,7 +2,7 @@ package com.despegar.integration.mongo.connector;
 
 import java.util.List;
 
-import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.lang.mutable.MutableLong;
 
 import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
@@ -15,6 +15,12 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         this.mongoDao = mongoDao;
     }
 
+    static interface ForEachMethod<T> {
+
+        void iterate(T entity);
+
+    }
+
     public T findOne() {
         Query query = new Query();
         query.limit(1);
@@ -22,7 +28,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         return this.findOne(query);
     }
 
-    public T findOne(Query query) {
+    public T findOne(final Query query) {
         return this.mongoDao.findOne(query.match(), query.sort(), query.limit(), query.skip());
     }
 
@@ -38,13 +44,23 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         return this.find(query, null);
     }
 
-    public List<T> find(final Query query, final MutableInt count) {
+    public List<T> find(final Query query, MutableLong count) {
 
         if (query == null) {
-            return this.mongoDao.find(null, null, null, null, null, null);
+            return this.mongoDao.find(null, null, null, null, null, count);
+        }
+
+        // TODO el cursor del find no esta devolviendo el metodo .count(), hasta que lo agreguen
+        // esta es la unica forma de obtener la cantidad de elementos
+        if (count != null) {
+            count.setValue(this.mongoDao.collectionSize(query.match()));
         }
 
         return this.mongoDao.find(query.match(), null, query.sort(), null, null, count);
+    }
+
+    public void forEach(final Query query, final ForEachMethod<T> forEach) {
+        this.mongoDao.forEach(query.match(), null, query.sort(), query.limit(), query.skip(), forEach);
     }
 
     public Long count(final Match query) {
@@ -52,64 +68,83 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
             return this.mongoDao.collectionSize();
         }
 
-        // TODO dejar un query?
         return this.mongoDao.collectionSize(query);
     }
 
-    public <X> X add(final T t) {
+    public <X> X add(T t) {
         t.setId(null);
         return this.mongoDao.insert(t);
     }
 
-    // TODO no hay mas save, ni insertIfNotPresent
+    // FALSE = insert | TRUE = update
+    public Boolean updateOrInsert(final Match query, final T entity) {
+        return this.mongoDao.insertOrUpdate(query, entity);
+    }
 
-    public Long update(final Match query, final Update updateQuery) {
-        return this.update(query, updateQuery, Boolean.FALSE);
+    public Boolean update(final Match query, final Update updateQuery) {
+        Long count = this.update(query, updateQuery, Boolean.FALSE);
+        return (count == 1);
+    }
+
+    public Boolean update(final Match query, final T entity) {
+        Long count = this.update(query, entity, Boolean.FALSE);
+        return (count == 1);
     }
 
     public Long update(final Match query, final Update updateQuery, final Boolean multi) {
-        return this.mongoDao.update(query, updateQuery, Boolean.FALSE, multi);
+        return this.mongoDao.update(query, updateQuery, multi);
+    }
+
+    public Long update(final Match query, final T entity, final Boolean multi) {
+        return this.mongoDao.update(query, entity, multi);
     }
 
     public <X> Boolean update(final X id, final Update updateQuery) {
         return this.mongoDao.updateById(id, updateQuery);
     }
 
-    // TODO findAndModify no existe mas
+    public <X> Boolean update(final X id, final T entity) {
+        return this.mongoDao.updateById(id, entity);
+    }
 
     public <X> Boolean remove(final X id) {
-        return this.mongoDao.delete(id);
+        return this.mongoDao.deleteById(id);
     }
 
-    public Boolean remove(Match query) {
-        return this.mongoDao.delete(query);
+    public Boolean remove(final Match query) {
+        Long count = this.remove(query, Boolean.FALSE);
+        return (count == 1);
     }
 
-    // TODO no hay mas drop
+    public Long remove(final Match query, final Boolean multi) {
+        return this.mongoDao.delete(query, multi);
+    }
 
-    public List<T> aggregate(Aggregate query) {
+    public Long removeAll() {
+        return this.remove(null, Boolean.TRUE);
+    }
+
+    public List<T> aggregate(final Aggregate query) {
         return this.mongoDao.aggregate(query.piplines());
     }
 
-    public <Y> List<Y> aggregate(Aggregate query, Class<Y> returnClazz) {
+    public <Y> List<Y> aggregate(final Aggregate query, final Class<Y> returnClazz) {
         return this.mongoDao.aggregate(query.piplines(), returnClazz);
     }
 
-    // TODO no hay mas aggregate options
-
-    public <Y> List<Y> distinct(String property, Class<Y> returnClazz) {
+    public <Y> List<Y> distinct(final String property, final Class<Y> returnClazz) {
         return this.distinct(property, null, returnClazz);
     }
 
-    public <Y> List<Y> distinct(String property, Match query, Class<Y> returnClazz) {
+    public <Y> List<Y> distinct(final String property, final Match query, final Class<Y> returnClazz) {
         return this.mongoDao.distinct(property, query, returnClazz);
     }
 
-    public Boolean exists(Query query) {
+    public Boolean exists(final Query query) {
         return this.mongoDao.exists(query.match());
     }
 
-    public BulkResult bulk(Bulk<T> bulk) {
+    public BulkResult bulk(final Bulk<T> bulk) {
         return this.mongoDao.bulk(bulk.operations(), bulk.isOrderRequired());
     }
 

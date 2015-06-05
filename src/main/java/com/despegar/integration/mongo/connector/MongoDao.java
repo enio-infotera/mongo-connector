@@ -5,11 +5,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.lang.mutable.MutableLong;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import com.despegar.integration.mongo.connector.Bulk.BulkOperation;
+import com.despegar.integration.mongo.connector.MongoCollection.ForEachMethod;
 import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
@@ -69,37 +70,23 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return this.serialize(this.coll.find(Filters.eq("_id", id)).first());
     }
 
-    public List<T> find(Bson query, Bson fields, Bson sortInfo, Integer limit, Integer skip, MutableInt count) {
-        FindIterable<Document> cursor = this.coll.find();
-
-        if (query != null) {
-            cursor.filter(query);
+    public void forEach(Bson query, Bson fields, Bson sortInfo, Integer limit, Integer skip, ForEachMethod<T> forEach) {
+        FindIterable<Document> cursor = this.getFindCursor(query, fields, sortInfo, limit, skip, null);
+        MongoCursor<Document> iterator = cursor.iterator();
+        try {
+            while (iterator.hasNext()) {
+                T next = this.serialize(iterator.next());
+                forEach.iterate(next);
+            }
+        } finally {
+            iterator.close();
         }
+    }
 
-        if (fields != null) {
-            cursor.projection(fields);
-        }
-
-        // TODO y el size?
-        // if (count != null) {
-        // count.setValue(cursor.);
-        // }
-
-        if (sortInfo != null) {
-            cursor = cursor.sort(sortInfo);
-        }
-
-        // TODO no existe mas la posibilidad de cambiar el read preference
-
-        if (skip != null) {
-            cursor = cursor.skip(skip);
-        }
-
-        if (limit != null) {
-            cursor = cursor.limit(limit);
-        }
-
+    public List<T> find(Bson query, Bson fields, Bson sortInfo, Integer limit, Integer skip, MutableLong count) {
+        FindIterable<Document> cursor = this.getFindCursor(query, fields, sortInfo, limit, skip, count);
         List<T> ret = new ArrayList<T>();
+
         MongoCursor<Document> iterator = cursor.iterator();
         try {
             while (iterator.hasNext()) {
@@ -113,18 +100,11 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return ret;
     }
 
-    // TODO no existe mas
-    // public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
-    // boolean returnNew, boolean upsert) {
-    // return this.serialize(this.coll.findAndModify(query, fields, sort, remove, update, returnNew, upsert));
-    // }
-
     public <X> List<X> distinct(String key, Bson query, Class<X> clazz) {
         DistinctIterable<X> iterable = this.coll.distinct(key, clazz);
         if (query != null) {
             iterable.filter(query);
         }
-
         this.coll.find(Filters.and(Filters.eq("name", "algo"), Filters.exists("pepe"))).skip(10).limit(10);
 
         List<X> ret = new ArrayList<X>();
@@ -143,18 +123,24 @@ class MongoDao<T extends GenericIdentifiableEntity> {
 
     @SuppressWarnings("unchecked")
     public <X extends Object> X insert(T value) {
-        if (!this.idGenerator.validateId(value.getId())) {
-            // TODO get collection name?
-            value.setId(this.idGenerator.generateId(null));
-        }
-
+        value.setId(this.idGenerator.generateId(this.getCollectionName()));
         this.coll.insertOne(this.deserialize(value));
         return (X) value.getId();
     }
 
-    public Long update(Bson query, Bson value, Boolean upsert, Boolean multi) {
+    public Boolean insertOrUpdate(Bson query, T value) {
+        Long count = this.update(query, value, Boolean.FALSE);
+        if (count == 0) {
+            this.insert(value);
+            return Boolean.FALSE;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    public Long update(Bson query, Bson value, Boolean multi) {
         UpdateOptions up = new UpdateOptions();
-        up.upsert(upsert);
+        up.upsert(Boolean.FALSE);
 
         UpdateResult ur = null;
         if (multi) {
@@ -166,12 +152,29 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return ur.getModifiedCount();
     }
 
+    public Long update(Bson query, T value, Boolean multi) {
+        UpdateOptions up = new UpdateOptions();
+        up.upsert(Boolean.FALSE);
+
+        UpdateResult ur = null;
+        if (multi) {
+            ur = this.coll.updateMany(query, this.deserialize(value), up);
+        } else {
+            ur = this.coll.updateOne(query, this.deserialize(value), up);
+        }
+
+        return ur.getModifiedCount();
+    }
+
     public <X extends Object> Boolean updateById(X id, Bson value) {
         UpdateResult ur = this.coll.updateOne(Filters.eq("_id", id), value);
         return (ur.getModifiedCount() == 1L);
     }
 
-    // TODO updateOrInsert muere, debido a que no se van a aceptar mas save o update por objeto completo
+    public <X extends Object> Boolean updateById(X id, T entity) {
+        UpdateResult ur = this.coll.updateOne(Filters.eq("_id", id), this.deserialize(entity));
+        return (ur.getModifiedCount() == 1L);
+    }
 
     public Long collectionSize() {
         return this.coll.count();
@@ -180,8 +183,6 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     public Long collectionSize(Bson query) {
         return this.coll.count(query);
     }
-
-    // TODO drop y rename collection ya no se van a poder hacer desde mongo-connector
 
     public Long delete(Bson query, Boolean multi) {
         DeleteResult dr = null;
@@ -193,12 +194,10 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return dr.getDeletedCount();
     }
 
-    public <X extends Object> Boolean delete(X id) {
+    public <X extends Object> Boolean deleteById(X id) {
         DeleteResult dr = this.coll.deleteOne(Filters.eq("_id", id));
-        return (dr.getDeletedCount() == 1L);
+        return (dr.getDeletedCount() == 1);
     }
-
-    // TODO no se pueden crear indices desde codigo
 
     public Boolean exists(Bson query) {
         FindIterable<Document> iterable = this.coll.find(query).limit(1);
@@ -238,6 +237,38 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return response;
     }
 
+    private FindIterable<Document> getFindCursor(Bson query, Bson fields, Bson sortInfo, Integer limit, Integer skip,
+        MutableLong count) {
+        FindIterable<Document> cursor = this.coll.find();
+
+        if (query != null) {
+            cursor.filter(query);
+        }
+
+        if (fields != null) {
+            cursor.projection(fields);
+        }
+
+        // TODO y el size?
+        // if (count != null) {
+        // count.setValue(cursor.);
+        // }
+
+        if (sortInfo != null) {
+            cursor = cursor.sort(sortInfo);
+        }
+
+        if (skip != null) {
+            cursor = cursor.skip(skip);
+        }
+
+        if (limit != null) {
+            cursor = cursor.limit(limit);
+        }
+
+        return cursor;
+    }
+
     private T serialize(Document o) {
         return this.serialize(o, this.clazz);
     }
@@ -259,6 +290,10 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         module.addDeserializer(Date.class, new DateJsonDeserializer());
 
         return module;
+    }
+
+    private String getCollectionName() {
+        return this.coll.getNamespace().getCollectionName();
     }
 
 }

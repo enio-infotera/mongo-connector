@@ -30,6 +30,7 @@ public class MongoDBConnection {
 
     private MongoDatabase db;
 
+    @SuppressWarnings("resource")
     private void instanceDB() throws UnknownHostException {
         if (this.mongoOptions == null) {
             this.mongoOptions = MongoClientOptions.builder().build();

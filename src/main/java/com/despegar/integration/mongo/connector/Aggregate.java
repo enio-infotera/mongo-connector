@@ -137,7 +137,6 @@ public class Aggregate {
     static class GroupAggregate
         extends AggregateOperation {
 
-        // TODO rehacer group
         private Group group;
 
         public GroupAggregate(Group group) {
@@ -168,7 +167,7 @@ public class Aggregate {
         }
     }
 
-    public class SkipAggregate
+    static class SkipAggregate
         extends AggregateOperation {
 
         private Integer skip;

@@ -2,8 +2,13 @@ package com.despegar.integration.mongo.connector;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWriter;
+import org.bson.BsonDouble;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -36,34 +41,28 @@ public class MyFilters {
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass,
             final CodecRegistry codecRegistry) {
 
-            // TODO pasar a new Document, es mas facil de leer
-            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            Document near = new Document();
 
-            writer.writeStartDocument();
-            writer.writeName(this.fieldName);
-            writer.writeStartDocument();
-            writer.writeName(this.operatorName);
-            writer.writeStartDocument();
-            writer.writeName("$geometry");
-            writer.writeStartDocument();
-            writer.writeString("type", "Point");
-            writer.writeStartArray("coordinates");
-            writer.writeDouble(this.point.getLatitude());
-            writer.writeDouble(this.point.getLongitude());
-            writer.writeEndArray();
-            writer.writeEndDocument();
+            Document geometry = new Document();
+            geometry.append("type", "Point");
+            List<BsonDouble> points = new ArrayList<BsonDouble>();
+            points.add(new BsonDouble(this.point.getLongitude()));
+            points.add(new BsonDouble(this.point.getLatitude()));
+            geometry.append("coordinates", new BsonArray(points));
+
+            near.append("$geometry", geometry);
+
             if (this.minDistance != null) {
-                writer.writeDouble("$minDistance", this.minDistance);
+                near.append("$minDistance", this.minDistance);
             }
             if (this.maxDistance != null) {
-                writer.writeDouble("$maxDistance", this.maxDistance);
+                near.append("$maxDistance", this.maxDistance);
             }
-            writer.writeEndDocument();
-            writer.writeEndDocument();
 
-            return writer.getDocument();
+            Document query = new Document(this.operatorName, near);
+
+            return new Document(this.fieldName, query).toBsonDocument(documentClass, codecRegistry);
         }
-
     }
 
 }

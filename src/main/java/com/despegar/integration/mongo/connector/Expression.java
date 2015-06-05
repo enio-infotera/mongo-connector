@@ -1,9 +1,10 @@
 package com.despegar.integration.mongo.connector;
 
-import java.util.Collection;
-
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.Document;
+import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -35,8 +36,7 @@ public abstract class Expression
         MINUTES("$minute"),
         YEAR("$year"),
         MONTH("$month"),
-        DAY("$dayOfMonth"),
-        SET_INTERSECTION("$setIntersection");
+        DAY("$dayOfMonth");
 
         private String operator;
 
@@ -46,7 +46,6 @@ public abstract class Expression
     };
 
     protected ExpressionOperator operator;
-    protected Object[] parameters;
 
     public static Arithmetical multiply(Object... parameters) {
         return new Arithmetical(ExpressionOperator.MULTIPLY, parameters);
@@ -152,71 +151,146 @@ public abstract class Expression
         return new Date(ExpressionOperator.DAY, expression);
     }
 
-    public static Set setIntersection(String property, Expression expression) {
-        return new Set(ExpressionOperator.SET_INTERSECTION, property, expression);
-    }
-
-    public static Set setIntersection(Collection<?> list, Expression expression) {
-        return new Set(ExpressionOperator.SET_INTERSECTION, list, expression);
-    }
-
-    public static Set setIntersection(String property, Collection<?> list) {
-        return new Set(ExpressionOperator.SET_INTERSECTION, list, property);
-    }
-
     static class Arithmetical
         extends Expression {
 
+        private Object[] operators;
+
         public Arithmetical(ExpressionOperator op, Object... operators) {
             this.operator = op;
-            this.parameters = operators;
+            this.operators = operators;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+            writer.writeStartArray(this.operator.operator);
+            for (Object opt : this.operators) {
+                if (opt instanceof Expression) {
+                    BsonDocument exp = ((Expression) opt).toBsonDocument(documentClass, codecRegistry);
+                    writer.writeBinaryData(exp.asBinary());
+                } else {
+                    encodeValue(writer, opt, codecRegistry);
+                }
+            }
+            writer.writeEndArray();
+            writer.writeEndDocument();
+
+            return writer.getDocument();
         }
     }
 
     static class Comparison
         extends Expression {
 
+        private Object opt1;
+        private Object opt2;
+
         public Comparison(ExpressionOperator op, Object value1, Object value2) {
             this.operator = op;
-            this.parameters = new Object[] {value1, value2};
+            this.opt1 = value1;
+            this.opt2 = value2;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+            writer.writeStartArray(this.operator.operator);
+
+            if (this.opt1 instanceof Expression) {
+                BsonDocument exp = ((Expression) this.opt1).toBsonDocument(documentClass, codecRegistry);
+                writer.writeBinaryData(exp.asBinary());
+            } else {
+                encodeValue(writer, this.opt1, codecRegistry);
+            }
+
+            if (this.opt2 instanceof Expression) {
+                BsonDocument exp = ((Expression) this.opt2).toBsonDocument(documentClass, codecRegistry);
+                writer.writeBinaryData(exp.asBinary());
+            } else {
+                encodeValue(writer, this.opt2, codecRegistry);
+            }
+
+            writer.writeEndArray();
+            writer.writeEndDocument();
+
+            return writer.getDocument();
         }
     }
 
     static class Conditional
         extends Expression {
 
+        private Object ifOp;
+        private Object thenOp;
+        private Object elsOp;
+
         public Conditional(ExpressionOperator op, Object i, Object then, Object els) {
             this.operator = op;
-            this.parameters = new Object[] {i, then, els};
+            this.ifOp = i;
+            this.thenOp = then;
+            this.elsOp = els;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+            writer.writeStartArray(this.operator.operator);
+
+            if (this.ifOp instanceof Expression) {
+                BsonDocument exp = ((Expression) this.ifOp).toBsonDocument(documentClass, codecRegistry);
+                writer.writeBinaryData(exp.asBinary());
+            } else {
+                encodeValue(writer, this.ifOp, codecRegistry);
+            }
+
+            if (this.thenOp instanceof Expression) {
+                BsonDocument exp = ((Expression) this.thenOp).toBsonDocument(documentClass, codecRegistry);
+                writer.writeBinaryData(exp.asBinary());
+            } else {
+                encodeValue(writer, this.thenOp, codecRegistry);
+            }
+
+            if (this.elsOp instanceof Expression) {
+                BsonDocument exp = ((Expression) this.elsOp).toBsonDocument(documentClass, codecRegistry);
+                writer.writeBinaryData(exp.asBinary());
+            } else {
+                encodeValue(writer, this.elsOp, codecRegistry);
+            }
+
+            writer.writeEndArray();
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+
         }
     }
 
     static class Array
         extends Expression {
 
+        private Object expression;
+
         public Array(ExpressionOperator op, Object expression) {
             this.operator = op;
-            this.parameters = new Object[] {expression};
+            this.expression = expression;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+            if (this.expression instanceof Expression) {
+                return new Document(this.operator.operator, ((Expression) this.expression).toBsonDocument(documentClass,
+                    codecRegistry)).toBsonDocument(documentClass, codecRegistry);
+            } else {
+                return new Document(this.operator.operator, this.expression).toBsonDocument(documentClass, codecRegistry);
+            }
         }
     }
 
@@ -244,28 +318,21 @@ public abstract class Expression
     static class Date
         extends Expression {
 
+        private Object expression;
+
         public Date(ExpressionOperator op, Object expression) {
             this.operator = op;
-            this.parameters = new Object[] {expression};
+            this.expression = expression;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
-        }
-    }
-
-    static class Set
-        extends Expression {
-
-        public Set(ExpressionOperator op, Object list1, Object list2) {
-            this.operator = op;
-            this.parameters = new Object[] {list1, list2};
-        }
-
-        @Override
-        public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
-            return new Document(this.operator.operator, this.parameters).toBsonDocument(documentClass, codecRegistry);
+            if (this.expression instanceof Expression) {
+                return new Document(this.operator.operator, ((Expression) this.expression).toBsonDocument(documentClass,
+                    codecRegistry)).toBsonDocument(documentClass, codecRegistry);
+            } else {
+                return new Document(this.operator.operator, this.expression).toBsonDocument(documentClass, codecRegistry);
+            }
         }
     }
 
@@ -273,8 +340,17 @@ public abstract class Expression
         return this.operator;
     }
 
-    public Object[] getParameters() {
-        return this.parameters;
+    @SuppressWarnings("unchecked")
+    private static <TItem> void encodeValue(final BsonDocumentWriter writer, final TItem value,
+        final CodecRegistry codecRegistry) {
+        if (value == null) {
+            writer.writeNull();
+        } else if (value instanceof Bson) {
+            ((Encoder) codecRegistry.get(BsonDocument.class)).encode(writer,
+                ((Bson) value).toBsonDocument(BsonDocument.class, codecRegistry), EncoderContext.builder().build());
+        } else {
+            ((Encoder) codecRegistry.get(value.getClass())).encode(writer, value, EncoderContext.builder().build());
+        }
     }
 
 }

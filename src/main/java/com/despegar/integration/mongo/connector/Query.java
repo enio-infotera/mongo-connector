@@ -1,5 +1,7 @@
 package com.despegar.integration.mongo.connector;
 
+import java.util.regex.Pattern;
+
 import org.bson.conversions.Bson;
 
 import com.despegar.integration.mongo.connector.Sort.SortDirection;
@@ -77,6 +79,46 @@ public class Query {
         return this;
     }
 
+    public Query notExists(String property) {
+        this.match.notExists(property);
+        return this;
+    }
+
+    public Query size(String property, Integer size) {
+        this.match.size(property, size);
+        return this;
+    }
+
+    public Query regex(String property, Pattern pattern) {
+        this.match.regex(property, pattern);
+        return this;
+    }
+
+    public Query not(Match notMatch) {
+        this.match.not(notMatch);
+        return this;
+    }
+
+    public Query or(Match... orMatchs) {
+        this.match.or(orMatchs);
+        return this;
+    }
+
+    public Query and(Match... andMatchs) {
+        this.match.and(andMatchs);
+        return this;
+    }
+
+    public Query text(String textToSearch) {
+        this.match.text(textToSearch);
+        return this;
+    }
+
+    public Query text(String textToSearch, String language) {
+        this.match.text(textToSearch, language);
+        return this;
+    }
+
     public Query addSort(String property, SortDirection direction) {
         this.sort.addSort(property, direction);
         return this;
@@ -87,8 +129,7 @@ public class Query {
         return this;
     }
 
-    // TODO mod, not, notExists, near, nearSphere, intersect, within, or, and
-    // TODO new! sin soporte en mongo-connector regex, size, text
+    // TODO mod, nearSphere, intersect, within
     // siguen sin soporte where y elemMatch
 
 

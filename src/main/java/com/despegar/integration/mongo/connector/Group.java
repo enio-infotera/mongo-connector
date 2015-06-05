@@ -61,10 +61,20 @@ public class Group
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry) {
         Document doc = new Document();
         if (this.id instanceof Map) {
-            // TODO armar mapa para id
+            Document id = new Document();
+            Map<String, Object> idMap = (Map<String, Object>) this.id;
+            for (Entry<String, Object> entry : idMap.entrySet()) {
+                if (entry.getValue() instanceof Expression) {
+                    id.append(entry.getKey(), ((Expression) entry.getValue()).toBsonDocument(documentClass, codecRegistry));
+                } else {
+                    id.append(entry.getKey(), entry.getValue());
+                }
+            }
+            doc.append("_id", id);
         } else if (this.id instanceof Expression) {
             doc.append("_id", ((Expression) this.id).toBsonDocument(documentClass, codecRegistry));
         } else {
