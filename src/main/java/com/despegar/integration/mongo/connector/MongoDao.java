@@ -105,7 +105,6 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         if (query != null) {
             iterable.filter(query);
         }
-        this.coll.find(Filters.and(Filters.eq("name", "algo"), Filters.exists("pepe"))).skip(10).limit(10);
 
         List<X> ret = new ArrayList<X>();
         MongoCursor<X> iterator = iterable.iterator();
