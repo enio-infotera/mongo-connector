@@ -184,9 +184,8 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return ret;
     }
 
-    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update,
-        boolean returnNew, boolean upsert) {
-        return this.serialize(this.coll.findAndModify(query, fields, sort, remove, update, returnNew, upsert));
+    public T findAndModify(DBObject query, DBObject sort, boolean remove, DBObject update) {
+        return this.serialize(this.coll.findAndModify(query, null, sort, remove, update, Boolean.TRUE, Boolean.FALSE));
     }
 
     public List<?> distinct(String key) {
