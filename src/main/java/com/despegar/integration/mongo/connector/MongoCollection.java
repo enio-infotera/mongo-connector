@@ -66,6 +66,13 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
             this.isCrucialDataIntegration(query));
     }
 
+    public T findAndModify(final Query query, final Update update) {
+        final MongoQuery mhq = new MongoQuery(query);
+        final MongoUpdate mu = new MongoUpdate(update);
+
+        return this.mongoDao.findAndModify(mhq.getQuery(), null, Boolean.FALSE, mu.getUpdate());
+    }
+
     public Integer count(final Query query) {
         if (query == null) {
             return this.mongoDao.getTotalObjectsInCollection(this.collectionName);
@@ -108,12 +115,15 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         return this.mongoDao.update(mongoQuery.getQuery(), mongoUpdateQuery.getUpdate(), false);
     }
 
+    @Deprecated
+    /*
+     * Use FindAndModify
+     */
     public T getAndUpdate(final Query query, boolean remove, final Update updateQuery, boolean returnNew) {
         MongoQuery mhq = new MongoQuery(query);
         MongoUpdate mhqUpdate = new MongoUpdate(updateQuery);
 
-        return this.mongoDao.findAndModify(mhq.getQuery(), null, mhq.getSortInfo(), remove, mhqUpdate.getUpdate(),
-            returnNew, false);
+        return this.mongoDao.findAndModify(mhq.getQuery(), mhq.getSortInfo(), remove, mhqUpdate.getUpdate());
     }
 
     public <X extends Object> boolean remove(final X id) {
@@ -169,10 +179,10 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         MongoQuery q = new MongoQuery(query);
         return this.mongoDao.exists(q.getQuery());
     }
-    
+
     public BulkResult bulk(Bulk<T> bulk) {
         MongoBulkQuery bulkQuery = new MongoBulkQuery(bulk);
-        return mongoDao.bulk(bulkQuery.getOperations(), bulk.getOrderRequired());
+        return this.mongoDao.bulk(bulkQuery.getOperations(), bulk.getOrderRequired());
     }
 
     private ReadPreference isCrucialDataIntegration(Query query) {
