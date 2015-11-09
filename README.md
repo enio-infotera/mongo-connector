@@ -9,7 +9,7 @@ Lightweight connector to [MongoDB](http://www.mongodb.org/).
 <dependency>
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
-	<version>1.1.1</version>
+	<version>[,2.0.0)</version>
 </dependency>
 ```
 
