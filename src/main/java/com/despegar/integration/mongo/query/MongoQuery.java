@@ -357,4 +357,8 @@ public class MongoQuery {
         return 0;
     }
 
+	public DBObject getFields() {
+		return new BasicDBObject(this.handlerQuery.getFields());
+	}
+
 }

@@ -3,6 +3,7 @@ package com.despegar.integration.mongo.query;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +64,7 @@ public class Query {
 
     private List<Query> ors = new ArrayList<Query>();
     private List<Query> andOrs = new ArrayList<Query>();
+    private Map<String, Object> fields = new HashMap<String, Object>();
 
     private Integer limit = null;
     private Integer skip = 0;
@@ -108,6 +110,25 @@ public class Query {
         this.put(property, RangeOperation.ALL, values, Boolean.FALSE);
         return this;
     }
+    
+    public Map<String, Object> getFields() {
+		return fields;
+	}
+    
+    public Query includeFieldsOnly(String... fieldNames) {
+        for (String field : fieldNames) {
+            this.fields.put(field, 1);
+        }
+        return this;
+    }
+
+    public Query excludeFields(String... fieldNames) {
+        for (String field : fieldNames) {
+            this.fields.put(field, 0);
+        }
+        return this;
+    }
+    
 
     private void put(String key, ComparisonOperation operator, Object value, boolean negation) {
         if (key == null) {

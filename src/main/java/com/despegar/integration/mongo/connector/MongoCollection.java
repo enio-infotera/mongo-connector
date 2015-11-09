@@ -39,7 +39,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     public T findOne(final Query query) {
         final MongoQuery mhq = new MongoQuery(query);
 
-        return this.mongoDao.findOne(mhq.getQuery(), mhq.getSortInfo(), mhq.getQueryPage());
+        return this.mongoDao.findOne(mhq.getQuery(), mhq.getFields(), mhq.getSortInfo(), mhq.getQueryPage());
     }
 
     public <X extends Object> T findOne(final X id) {
@@ -62,7 +62,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
         final MongoQuery mongoQuery = new MongoQuery(query);
 
-        return this.mongoDao.find(mongoQuery.getQuery(), null, mongoQuery.getSortInfo(), mongoQuery.getQueryPage(), count,
+        return this.mongoDao.find(mongoQuery.getQuery(), mongoQuery.getFields(), mongoQuery.getSortInfo(), mongoQuery.getQueryPage(), count,
             this.isCrucialDataIntegration(query));
     }
 
