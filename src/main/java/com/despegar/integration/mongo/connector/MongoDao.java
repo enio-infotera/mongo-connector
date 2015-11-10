@@ -76,15 +76,24 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     }
 
     public T findOne(DBObject query, DBObject sortInfo, QueryPage page) {
-        List<T> list = this.find(query, new BasicDBObject(), sortInfo, page);
+    	return this.findOne(query, new BasicDBObject(), sortInfo, page);
+    }
+
+    public T findOne(DBObject query, DBObject fields, DBObject sortInfo,
+			QueryPage page) {
+        List<T> list = this.find(query, fields, sortInfo, page);
         if (list != null && !list.isEmpty()) {
             return list.get(0);
         }
         return null;
     }
-
+    
     public T findOne(DBObject query, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
-        List<T> list = this.find(query, new BasicDBObject(), sortInfo, page, readPreference);
+        return this.findOne(query, new BasicDBObject(), sortInfo, page, readPreference);
+    }
+    
+    public T findOne(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
+        List<T> list = this.find(query, fields, sortInfo, page, readPreference);
         if (list != null && !list.isEmpty()) {
             return list.get(0);
         }
@@ -401,4 +410,5 @@ class MongoDao<T extends GenericIdentifiableEntity> {
 
         return module;
     }
+	
 }
