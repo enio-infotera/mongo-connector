@@ -9,6 +9,12 @@
 		<version>7</version>
 	</parent> -->
 
+	<parent>
+		<groupId>com.despegar.scm</groupId>
+		<artifactId>scm-master-pom</artifactId>
+		<version>2.1.1</version>
+	</parent>
+
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
 	<version>1.1.11-SNAPSHOT</version>
