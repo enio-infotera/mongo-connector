@@ -1,5 +1,4 @@
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<!-- - deactivated maven central upload. 
@@ -17,7 +16,7 @@
 
 	<groupId>com.despegar.integration</groupId>
 	<artifactId>mongo-connector</artifactId>
-	<version>1.1.11-SNAPSHOT</version>
+	<version>2.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>Mongo Connector</name>
@@ -55,7 +54,8 @@
 		<connection>scm:git:git@github.com:despegar/mongo-connector.git</connection>
 		<developerConnection>scm:git:git@github.com:despegar/mongo-connector.git</developerConnection>
 		<url>https://github.com/despegar/mongo-connector</url>
-	</scm>
+	  <tag>mongo-connector-2.0.0</tag>
+  </scm>
 
 	<properties>
 		<mongodb.version>3.0.2</mongodb.version>
