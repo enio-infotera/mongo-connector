@@ -214,3 +214,7 @@ Update update = new Update();
 //Here you load your updates
 yourBulkOperation.find(yourQuery).updateOne(update);
 ```
+
+### Date handling
+
+This connector maps date fields into ISODate object's. It supports old java.util.Date fields, as well as java.time.Instant in java 8!
