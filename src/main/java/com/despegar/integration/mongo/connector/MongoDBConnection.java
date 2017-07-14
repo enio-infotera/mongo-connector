@@ -2,11 +2,13 @@ package com.despegar.integration.mongo.connector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 
 public class MongoDBConnection {
@@ -14,6 +16,7 @@ public class MongoDBConnection {
     private String dbName;
     private String replicaSet;
     private MongoClientOptions mongoOptions;
+    private MongoCredential credential;
 
     public MongoDBConnection(String dbName, String replicaSet) throws UnknownHostException {
         this.dbName = dbName;
@@ -26,6 +29,19 @@ public class MongoDBConnection {
         this.replicaSet = replicaSet;
         this.mongoOptions = mongoOptions;
         this.instanceDB();
+    }
+
+    public MongoDBConnection(String dbName, String replicaSet, String userName, String password,
+        MongoClientOptions mongoOptions) throws UnknownHostException {
+        this.dbName = dbName;
+        this.replicaSet = replicaSet;
+        this.credential = MongoCredential.createCredential(userName, dbName, password.toCharArray());
+        this.mongoOptions = mongoOptions;
+        this.instanceDB();
+    }
+
+    public MongoDBConnection(String dbName, String replicaSet, String userName, String password) throws UnknownHostException {
+        this(dbName, replicaSet, userName, password, null);
     }
 
     private DB db;
@@ -45,7 +61,12 @@ public class MongoDBConnection {
             serverAddresses.add(serverAddress);
         }
 
-        MongoClient mongo = new MongoClient(serverAddresses, this.mongoOptions);
+        MongoClient mongo;
+        if (this.credential != null) {
+            mongo = new MongoClient(serverAddresses, Arrays.asList(this.credential), this.mongoOptions);
+        } else {
+            mongo = new MongoClient(serverAddresses, this.mongoOptions);
+        }
         this.db = mongo.getDB(this.dbName);
 
     }
