@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.despegar.integration.mongo.exception.MongoAuthenticationException;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 
 public class MongoDBConnection {
@@ -32,7 +34,7 @@ public class MongoDBConnection {
     }
 
     public MongoDBConnection(String dbName, String replicaSet, String userName, String password,
-        MongoClientOptions mongoOptions) throws UnknownHostException {
+        MongoClientOptions mongoOptions) throws UnknownHostException, MongoAuthenticationException {
         this.dbName = dbName;
         this.replicaSet = replicaSet;
         this.credential = MongoCredential.createCredential(userName, dbName, password.toCharArray());
@@ -40,7 +42,8 @@ public class MongoDBConnection {
         this.instanceDB();
     }
 
-    public MongoDBConnection(String dbName, String replicaSet, String userName, String password) throws UnknownHostException {
+    public MongoDBConnection(String dbName, String replicaSet, String userName, String password)
+        throws UnknownHostException, MongoAuthenticationException {
         this(dbName, replicaSet, userName, password, null);
     }
 
@@ -64,6 +67,11 @@ public class MongoDBConnection {
         MongoClient mongo;
         if (this.credential != null) {
             mongo = new MongoClient(serverAddresses, Arrays.asList(this.credential), this.mongoOptions);
+            try {
+                mongo.getDB(this.dbName).command("ping");
+            } catch (MongoTimeoutException e) {
+                throw new MongoAuthenticationException(this.credential);
+            }
         } else {
             mongo = new MongoClient(serverAddresses, this.mongoOptions);
         }
