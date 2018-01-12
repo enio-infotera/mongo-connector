@@ -28,7 +28,7 @@ public class QueryBuilder {
     /**
      * Builds a HandlerQuery from a query string parameters map.
      * <br>For example, this query string<br>
-     * <b> items?group=*alfre*&country=argentina&language=pt&OR=country,language&sort=country&order=asc</b>
+     * <b> items?group=&#42;alfre&#42;&country=argentina&language=pt&OR=country,language&sort=country&order=asc</b>
      * generates a HandlerQuery that filters items that have the "alfre" group (using wildcards)
      * and also have either "argentina" in country or "pt" in the language field, sorted by country in ascending order.
      * @param queryStringMap Query string parameters.

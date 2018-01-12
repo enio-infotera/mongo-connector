@@ -147,7 +147,7 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
      * 
-     * @param AggregateQuery
+     * @param query AggregateQuery
      * @return list of matches
      */
     public List<T> aggregate(AggregateQuery query) {
@@ -158,8 +158,8 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
-     * @param AggregateQuery
-     * @param Class of objects to return
+     * @param query AggregateQuery
+     * @param returnClazz Class of objects to return
      * @return list of matches
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
@@ -170,9 +170,9 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
-     * @param AggregateQuery
-     * @param AggregationOptions
-     * @param Class of objects to return
+     * @param query AggregateQuery
+     * @param options AggregationOptions
+     * @param returnClazz Class of objects to return
      * @return list of matches
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
