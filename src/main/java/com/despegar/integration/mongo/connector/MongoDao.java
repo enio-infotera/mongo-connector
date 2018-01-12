@@ -1,24 +1,43 @@
 package com.despegar.integration.mongo.connector;
 
+import java.net.UnknownHostException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.lang.mutable.MutableInt;
+
 import com.despegar.integration.mongo.entities.BulkResult;
 import com.despegar.integration.mongo.entities.GenericIdentifiableEntity;
 import com.despegar.integration.mongo.id.IdGenerator;
 import com.despegar.integration.mongo.query.MongoBulkQuery.BulkOperable;
 import com.despegar.integration.mongo.query.QueryPage;
-import com.despegar.integration.mongo.support.*;
+import com.despegar.integration.mongo.support.DateJsonDeserializer;
+import com.despegar.integration.mongo.support.DateJsonSerializer;
+import com.despegar.integration.mongo.support.IdWithUnderscoreStrategy;
+import com.despegar.integration.mongo.support.InstantJsonDeserializer;
+import com.despegar.integration.mongo.support.InstantJsonSerializer;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.mongodb.*;
+import com.mongodb.AggregationOptions;
 import com.mongodb.AggregationOptions.Builder;
 import com.mongodb.AggregationOptions.OutputMode;
-import org.apache.commons.lang.mutable.MutableInt;
-
-import java.net.UnknownHostException;
-import java.time.Instant;
-import java.util.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
+import com.mongodb.BulkWriteResult;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
+import com.mongodb.WriteResult;
 
 @SuppressWarnings("rawtypes")
 class MongoDao<T extends GenericIdentifiableEntity> {
@@ -43,6 +62,10 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         this.coll = this.mongoDb.getCollection(collection);
     }
 
+    public DBCollection getColl() {
+        return this.coll;
+    }
+
     private static SimpleModule getDateModule() {
         // Register custom serializers
         SimpleModule module = new SimpleModule("DateModule", new Version(0, 0, 2, null, null, null));
@@ -51,7 +74,7 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         module.addSerializer(Date.class, new DateJsonSerializer());
         module.addDeserializer(Date.class, new DateJsonDeserializer());
 
-        //Java Instant
+        // Java Instant
 
         module.addSerializer(Instant.class, new InstantJsonSerializer());
         module.addDeserializer(Instant.class, new InstantJsonDeserializer());
@@ -76,18 +99,17 @@ class MongoDao<T extends GenericIdentifiableEntity> {
     }
 
     public T findOne(DBObject query, DBObject sortInfo, QueryPage page) {
-    	return this.findOne(query, new BasicDBObject(), sortInfo, page);
+        return this.findOne(query, new BasicDBObject(), sortInfo, page);
     }
 
-    public T findOne(DBObject query, DBObject fields, DBObject sortInfo,
-			QueryPage page) {
+    public T findOne(DBObject query, DBObject fields, DBObject sortInfo, QueryPage page) {
         List<T> list = this.find(query, fields, sortInfo, page);
         if (list != null && !list.isEmpty()) {
             return list.get(0);
         }
         return null;
     }
-    
+
     public T findOne(DBObject query, DBObject sortInfo, QueryPage page, ReadPreference readPreference) {
         return this.findOne(query, new BasicDBObject(), sortInfo, page, readPreference);
     }
@@ -341,7 +363,8 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         return this.aggregate(pipeline, this.coll.getReadPreference(), this.clazz);
     }
 
-    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, ReadPreference readPreference, Class<X> resultClazz) {
+    public <X extends Object> List<X> aggregate(List<DBObject> pipeline, ReadPreference readPreference,
+        Class<X> resultClazz) {
         Builder builder = AggregationOptions.builder();
         builder.outputMode(OutputMode.CURSOR);
         return this.aggregate(pipeline, builder.build(), readPreference, resultClazz);
@@ -399,5 +422,5 @@ class MongoDao<T extends GenericIdentifiableEntity> {
         Object convertValue = this.mapper.convertValue(o, constructType);
         return (X) convertValue;
     }
-	
+
 }

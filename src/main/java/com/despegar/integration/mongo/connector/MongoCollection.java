@@ -21,12 +21,16 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;
-    protected MongoDao<T> mongoDao;
+    private MongoDao<T> mongoDao;
 
     MongoCollection(String collectionName, Class<T> collectionClass, MongoDao<T> mongoDao) {
         this.collectionName = collectionName;
         this.clazz = collectionClass;
         this.mongoDao = mongoDao;
+    }
+
+    public MongoDao<T> getMongoDao() {
+        return this.mongoDao;
     }
 
     public T findOne() {
