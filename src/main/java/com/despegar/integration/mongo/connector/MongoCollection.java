@@ -66,8 +66,8 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
         final MongoQuery mongoQuery = new MongoQuery(query);
 
-        return this.mongoDao.find(mongoQuery.getQuery(), mongoQuery.getFields(), mongoQuery.getSortInfo(), mongoQuery.getQueryPage(), count,
-            this.isCrucialDataIntegration(query));
+        return this.mongoDao.find(mongoQuery.getQuery(), mongoQuery.getFields(), mongoQuery.getSortInfo(),
+            mongoQuery.getQueryPage(), count, this.isCrucialDataIntegration(query));
     }
 
     public T findAndModify(final Query query, final Update update) {
@@ -146,6 +146,9 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * 
+     * @param AggregateQuery
+     * @return list of matches
      */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -155,6 +158,9 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * @param AggregateQuery
+     * @param Class of objects to return
+     * @return list of matches
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -164,6 +170,10 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * @param AggregateQuery
+     * @param AggregationOptions
+     * @param Class of objects to return
+     * @return list of matches
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
