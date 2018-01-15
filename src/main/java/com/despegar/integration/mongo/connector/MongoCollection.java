@@ -18,7 +18,7 @@ import com.despegar.integration.mongo.query.Update;
 import com.mongodb.AggregationOptions;
 import com.mongodb.ReadPreference;
 
-class MongoCollection<T extends GenericIdentifiableEntity<?>> {
+public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;
