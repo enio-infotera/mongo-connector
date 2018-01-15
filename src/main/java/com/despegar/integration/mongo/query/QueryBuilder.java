@@ -27,12 +27,12 @@ public class QueryBuilder {
 
     /**
      * Builds a HandlerQuery from a query string parameters map.
-     * For example, this query string:
-     * items?group=*alfre*&country=argentina&language=pt&OR=country,language&sort=country&order=asc
+     * <br>For example, this query string<br>
+     * <b> items?group=&#42;alfre&#42;&amp;country=argentina&amp;language=pt&amp;OR=country,language&amp;sort=country&amp;order=asc</b>
      * generates a HandlerQuery that filters items that have the "alfre" group (using wildcards)
-     * and also have either "argentina" in country or "pt" in the language field, sorted by country in ascending order. 
+     * and also have either "argentina" in country or "pt" in the language field, sorted by country in ascending order.
      * @param queryStringMap Query string parameters.
-     * @return
+     * @return Query
      */
     public static Query buildFromQueryStringMap(Map<String, String> queryStringMap) {
 
@@ -64,8 +64,8 @@ public class QueryBuilder {
                             List<Query> sameFieldOrQueries = new ArrayList<Query>();
                             for (String splittedOrValue : value.split(Pattern.quote(DEFAULT_OPERATOR_OR))) {
                                 Query sameFieldOrQuery = new Query();
-                                sameFieldOrQuery.equals(key, isLike(splittedOrValue) ? evaluateLikes(splittedOrValue)
-                                    : splittedOrValue);
+                                sameFieldOrQuery.equals(key,
+                                    isLike(splittedOrValue) ? evaluateLikes(splittedOrValue) : splittedOrValue);
                                 sameFieldOrQueries.add(sameFieldOrQuery);
                             }
                             handlerQuery.andOr(sameFieldOrQueries);

@@ -2,6 +2,7 @@ package com.despegar.integration.mongo.connector;
 
 import java.util.List;
 
+import com.mongodb.DBCollection;
 import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.mongo.entities.BulkResult;
@@ -17,16 +18,20 @@ import com.despegar.integration.mongo.query.Update;
 import com.mongodb.AggregationOptions;
 import com.mongodb.ReadPreference;
 
-public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
+class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;
-    protected MongoDao<T> mongoDao;
+    private MongoDao<T> mongoDao;
 
     MongoCollection(String collectionName, Class<T> collectionClass, MongoDao<T> mongoDao) {
         this.collectionName = collectionName;
         this.clazz = collectionClass;
         this.mongoDao = mongoDao;
+    }
+
+    public DBCollection getDBCollection(){
+        return this.mongoDao.getColl();
     }
 
     public T findOne() {
@@ -62,8 +67,8 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
         final MongoQuery mongoQuery = new MongoQuery(query);
 
-        return this.mongoDao.find(mongoQuery.getQuery(), mongoQuery.getFields(), mongoQuery.getSortInfo(), mongoQuery.getQueryPage(), count,
-            this.isCrucialDataIntegration(query));
+        return this.mongoDao.find(mongoQuery.getQuery(), mongoQuery.getFields(), mongoQuery.getSortInfo(),
+            mongoQuery.getQueryPage(), count, this.isCrucialDataIntegration(query));
     }
 
     public T findAndModify(final Query query, final Update update) {
@@ -142,6 +147,9 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * 
+     * @param query AggregateQuery
+     * @return list of matches
      */
     public List<T> aggregate(AggregateQuery query) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -151,6 +159,10 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * @param query AggregateQuery
+     * @param returnClazz Class object of objects to return
+     * @param <Y> the type of object to return
+     * @return list of matches
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
@@ -160,6 +172,11 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
+     * @param query AggregateQuery
+     * @param options AggregationOptions
+     * @param returnClazz Class of objects to return
+     * @param <Y> the type of object to return
+     * @return list of matches
      */
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
