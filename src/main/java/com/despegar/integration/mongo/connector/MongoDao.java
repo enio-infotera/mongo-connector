@@ -40,7 +40,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 
 @SuppressWarnings("rawtypes")
-class MongoDao<T extends GenericIdentifiableEntity> {
+public class MongoDao<T extends GenericIdentifiableEntity> {
 
     private DB mongoDb;
     private Class<T> clazz;

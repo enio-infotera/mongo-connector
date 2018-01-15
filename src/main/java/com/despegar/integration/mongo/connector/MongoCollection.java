@@ -2,6 +2,7 @@ package com.despegar.integration.mongo.connector;
 
 import java.util.List;
 
+import com.mongodb.DBCollection;
 import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.mongo.entities.BulkResult;
@@ -17,7 +18,7 @@ import com.despegar.integration.mongo.query.Update;
 import com.mongodb.AggregationOptions;
 import com.mongodb.ReadPreference;
 
-public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
+class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;
@@ -29,8 +30,8 @@ public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         this.mongoDao = mongoDao;
     }
 
-    public MongoDao<T> getMongoDao() {
-        return this.mongoDao;
+    public DBCollection getDBCollection(){
+        return this.mongoDao.getColl();
     }
 
     public T findOne() {
