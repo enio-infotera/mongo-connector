@@ -11,14 +11,19 @@ public class MongoCollectionFactory {
 
     public MongoCollectionFactory(MongoDBConnection mongoDBConnection) {
         this.mongoDBConnection = mongoDBConnection;
+        this.idGenerator = new StringIdGenerator();
+        this.mapper = new ObjectMapper();
+    }
 
+    public MongoCollectionFactory(DBConnection dbConnection){
+        this.mongoDBConnection = dbConnection;
         this.idGenerator = new StringIdGenerator();
         this.mapper = new ObjectMapper();
     }
 
     private IdGenerator<?> idGenerator;
     private ObjectMapper mapper;
-    private MongoDBConnection mongoDBConnection;
+    private DBConnection mongoDBConnection;
 
     public <T extends GenericIdentifiableEntity<?>> MongoCollection<T> buildMongoCollection(String collection,
         Class<T> clazz) throws UnknownHostException {

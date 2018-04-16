@@ -13,7 +13,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 
-public class MongoDBConnection {
+public class MongoDBConnection implements DBConnection{
 
     private String dbName;
     private String replicaSet;
@@ -79,7 +79,7 @@ public class MongoDBConnection {
 
     }
 
-    DB getDB() {
+    public DB getDB() {
         return this.db;
     }
 }
