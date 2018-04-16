@@ -48,6 +48,7 @@ public class MongoDao<T extends GenericIdentifiableEntity> {
     private IdGenerator idGenerator;
     private ObjectMapper mapper;
 
+    //PROBANDO PERMISOS
     MongoDao(DB mongoDb, String collection, ObjectMapper mapper, Class<T> clazz, IdGenerator idGenerator)
         throws UnknownHostException {
         this.mongoDb = mongoDb;

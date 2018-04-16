@@ -3,6 +3,7 @@ package com.despegar.integration.mongo.connector;
 import java.util.List;
 
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import org.apache.commons.lang.mutable.MutableInt;
 
 import com.despegar.integration.mongo.entities.BulkResult;
@@ -18,7 +19,7 @@ import com.despegar.integration.mongo.query.Update;
 import com.mongodb.AggregationOptions;
 import com.mongodb.ReadPreference;
 
-class MongoCollection<T extends GenericIdentifiableEntity<?>> {
+public class MongoCollection<T extends GenericIdentifiableEntity<?>> {
 
     protected Class<T> clazz;
     private String collectionName;
@@ -144,6 +145,7 @@ class MongoCollection<T extends GenericIdentifiableEntity<?>> {
         this.mongoDao.dropCollection(this.collectionName);
     }
 
+
     /**
      * BETA! as Tusam said "this can fail", and we know how Tusam finish. We are working to find the best solution to
      * this framework, but you can test this. WARNING! aggregate only works with mongodb 2.6 or higher
@@ -181,6 +183,10 @@ class MongoCollection<T extends GenericIdentifiableEntity<?>> {
     public <Y extends Object> List<Y> aggregate(AggregateQuery query, AggregationOptions options, Class<Y> returnClazz) {
         MongoAggregationQuery mongoHandlerAggregationQuery = new MongoAggregationQuery(query);
         return this.mongoDao.aggregate(mongoHandlerAggregationQuery.getQuery(), options, returnClazz);
+    }
+
+    public <Y extends Object> List<Y> aggregate(List<DBObject> pipeline, AggregationOptions options, Class<Y> returnClazz) {
+        return this.mongoDao.aggregate(pipeline, options, returnClazz);
     }
 
     public List<?> distinct(String property) {
