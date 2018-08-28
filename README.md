@@ -7,7 +7,7 @@ Lightweight connector to [MongoDB](http://www.mongodb.org/).
 
 ```xml
 <dependency>
-	<groupId>com.despegar.integration</groupId>
+	<groupId>br.com.technologgy.integracao</groupId>
 	<artifactId>mongo-connector</artifactId>
 	<version>[,2.0.0)</version>
 </dependency>
@@ -17,7 +17,7 @@ Lightweight connector to [MongoDB](http://www.mongodb.org/).
 ###Getting started
 
 ```java
-import com.despegar.integration.mongo.*;
+import br.com.technologgy.integracao.mongo.*;
 
 MongoDBConnection connection = new MongoDBConnection("dbTest", "localhost:27017");
 MongoCollectionFactory factory = new MongoCollectionFactory(connection);

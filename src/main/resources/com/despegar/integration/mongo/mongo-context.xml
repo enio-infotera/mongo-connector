@@ -7,28 +7,28 @@
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
 		http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
 
-	<bean id="com.despegar.integration.mongo.mongoDBConnection" class="com.despegar.integration.mongo.connector.MongoDBConnection">
-		<constructor-arg value="${com.despegar.integration.mongo.dbName}" />
-		<constructor-arg value="${com.despegar.integration.mongo.replicaSet}" />
+	<bean id="br.com.technologgy.integracao.mongo.mongoDBConnection" class="br.com.technologgy.integracao.mongo.connector.MongoDBConnection">
+		<constructor-arg value="${br.com.technologgy.integracao.mongo.dbName}" />
+		<constructor-arg value="${br.com.technologgy.integracao.mongo.replicaSet}" />
 	</bean>		
 	
-	<bean id="com.despegar.integration.mongo.collection.factory" class="com.despegar.integration.mongo.connector.MongoCollectionFactory"
+	<bean id="br.com.technologgy.integracao.mongo.collection.factory" class="br.com.technologgy.integracao.mongo.connector.MongoCollectionFactory"
 		p:mapper-ref="objectMapper.alias"
 		p:idGenerator-ref="idGenerator.alias">
-		<constructor-arg ref="com.despegar.integration.mongo.mongoDBConnection" />
+		<constructor-arg ref="br.com.technologgy.integracao.mongo.mongoDBConnection" />
 	</bean>
 		
 	<alias alias="objectMapper.alias"
-	name="${com.despegar.integration.mongo.objectMapper:com.despegar.integration.mongo.objectMapper}" />
+	name="${br.com.technologgy.integracao.mongo.objectMapper:br.com.technologgy.integracao.mongo.objectMapper}" />
 	
-	<bean id="com.despegar.integration.mongo.objectMapper"
+	<bean id="br.com.technologgy.integracao.mongo.objectMapper"
 	class="com.fasterxml.jackson.databind.ObjectMapper" />
 	
 	<alias alias="idGenerator.alias"
-	name="${com.despegar.integration.mongo.idGenerator:com.despegar.integration.mongo.generator.string}"/>
+	name="${br.com.technologgy.integracao.mongo.idGenerator:br.com.technologgy.integracao.mongo.generator.string}"/>
 	
-	<bean id="com.despegar.integration.mongo.generator.string"
-	class="com.despegar.integration.mongo.id.StringIdGenerator" />
+	<bean id="br.com.technologgy.integracao.mongo.generator.string"
+	class="br.com.technologgy.integracao.mongo.id.StringIdGenerator" />
 	
 
 </beans>
